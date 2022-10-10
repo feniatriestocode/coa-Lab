@@ -7,12 +7,18 @@
 	curly_left:	.byte '{'
 	curly_right:	.byte '}'
 	comma:		.byte ','
-	len1: 		.word 0
-	array1: 	.word 0
-	len2: 		.word 0
-	array2: 	.word 0
-	farray:		.word 0
-	flen:		.word 0
+	.align 2
+		len1: 	.word 0
+	.align 2
+		array1: .word 0
+	.align 2
+		len2: 	.word 0
+	.align 2
+		array2: .word 0
+	.align 2
+		farray:	.word 0
+	.align 2
+		flen:	.word 0
 
 .text
 .globl main
@@ -38,14 +44,15 @@ main:
 	Exit:
 		li $v0, 10
 		syscall
-
+# Takes the sizes of the arrays, creates them and 
+# fills them with the elements, all given by the user
 user_input:
 	addi $sp, $sp, -20
 	sw $ra, ($sp)
 	sw $a0, 4($sp)	# len1
 	sw $a1, 8($sp)	# len2
-	sw $a2, 12($sp)	# array1
-	sw $a3, 16($sp)	# array2
+	sw $a2, 12($sp)	# &array1
+	sw $a3, 16($sp)	# &array2
 
 	la $a0, msg1
 	jal print_str
@@ -60,6 +67,8 @@ user_input:
 	la $a0, msg3
 	jal print_str
 
+	# First load the address where we
+	# store the value and then the value itself
 	lw $t1, 4($sp)
 	lw $t1, ($t1)
 	lw $t2, 12($sp)
@@ -92,7 +101,8 @@ user_input:
 	
 	bne $t0, $t1, Lout
 	beq $t1, 0, NULL
-	
+
+	# Case where both arrays are empty
 	NULL:
 		la $a0, err
 		jal print_str
@@ -156,8 +166,10 @@ merge:
 	sw $a1, 8($sp)	# len2
 	sw $a2, 12($sp)	# array1
 	sw $a3, 16($sp)	# array2
-	sw $s0, 20($sp)
-	
+	sw $s0, 20($sp) # farray
+
+	# First load the address where we
+	# store the value and then the value itself	
 	lw $t0, 4($sp)
 	lw $t0, ($t0)
 	lw $t1, 8($sp)
@@ -172,10 +184,10 @@ merge:
 	move $t3, $t1	# len2
 	li $t0, 0	# Array1 counter
 	li $t1, 0	# Array2 counter
-	li $t7, 0
-	lw $a1, ($a1)
-	lw $a2, ($a2)
-	lw $a3, ($a3)	
+	li $t7, 0	# Farray counter
+	lw $a1, ($a1)	# &Array1
+	lw $a2, ($a2)	# &Array2
+	lw $a3, ($a3)	# &Farray
 	
 	# t7: Counter for longest array
 	# t8: Longest array address
@@ -201,15 +213,18 @@ merge:
 			addi $t7, $t7, 1
 			addi $a1, $a1, 4
 			j compare
+	# len2 > len1, so we need to fill the final array with the array2 elements
 	fill1:
 		move $t8, $a3
 		move $t5, $t1
 		j fill
 
+	# len1 > len1, so we need to fill the final array with the array1 elements
 	fill2:
 		move $t8, $a2
 		move $t5, $t0
 
+	# Fill the final array
 	fill:
 		beq $t7, $t9, return
 		lw $t6, ($t8)
@@ -219,6 +234,8 @@ merge:
 		add $a1, $a1, 4
 		j fill
 
+	# Returns the sum of the 
+	# lenghts of the two arrays
 	return:
 		add $v0, $t2, $t3
 
@@ -230,7 +247,8 @@ merge:
 	lw $s0, 20($sp)	
 	addi $sp, $sp, 20
 	jr $ra
-	
+
+# Prints the final array in the {...} format
 parray:
 	addi $sp, $sp, -4
 	sw $a0, ($sp)
