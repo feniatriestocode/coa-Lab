@@ -10,14 +10,15 @@
 .globl main
 	# s0: &array 
 	# s1: pointer
-	# s2: offset
+	# s2: offset - bits to shift to the right
 	# s3: nbits
 	# s4: byte to store
 	# t0: constant (8)
 	# t1: constant (32)
 	# t2: &store
 	# t3: bit counter (for the ones we read)
-	# t4:
+	# t4: tmp storage
+	# t5: Num of bits to shift right the register 
 	# t9: bits to shift left
 main:
 	la $s0, array
@@ -41,17 +42,35 @@ main:
 
 	# Add pointer value to the array address
 	add $s0, $s0, $s1
-
 	la $t2, store + 3
 
 	# Add offset and nbits together
 	add $t4, $s2, $s3
 	sub $t5, $t1, $t4
 	move $t9, $0
+
 	bgt $t4, 8, L1
 	sub $t9, $t0, $t4
-	
+
 	L1:
+		jal byte_extractor
+
+	lw $a0, store
+	srlv $a0, $a0, $t5
+	jal print_hex
+
+	li $v0, 10
+	syscall
+
+byte_extractor:
+	addi $sp, $sp, -4
+	sw $ra, ($sp)
+
+	# Load byte we want to read,
+	# create double mask and extract
+	# the bits we want from the loaded 
+	# byte and then store it
+	L:
 		lb $s4, ($s0)
 		move $a0, $s2
 		jal create_mask_right
@@ -62,31 +81,30 @@ main:
 		lb $s4, ($s0)
 		and $s4, $v0, $s4
 		sb $s4, ($t2)
+		# Adjust counters and addresses
 		add $t4, $s2, $t9
 		sub $t3, $t0, $t4
 		sub $s3, $s3, $t3
-		beq $0, $s3, finale
+		beq $0, $s3, out
 		addi $s0, $s0, 1
 		addi $t2, $t2, -1
-
+		# Check remaining bits to 
+		# read for the shift values
 		bgt $s3, 8, set_offsets
 		move $s2, $0
 		move $t9, $t5
-		j L1
+		j L
 
 		set_offsets:
 			move $s2, $0
 			move $t9, $0
-			j L1
+			j L
 
-	finale:
-		lw $a0, store
-		srlv $a0, $a0, $t5
-		jal print_hex
-		
-		li $v0, 10
-		syscall
-	
+		out:
+			lw $ra, ($sp)
+			addi $sp, $sp, 4
+			jr $ra
+
 print_str:
 	li $v0, 4
 	syscall
@@ -102,6 +120,7 @@ read_int:
 	syscall
 	jr $ra
 
+# Shift bits to the left
 create_mask_left:
 	addi $sp, $sp, -4
 	sw $t0, ($sp)
@@ -112,7 +131,8 @@ create_mask_left:
 	lw $t0, ($sp)
 	addi $sp, $sp, 4
 	jr $ra
-	
+
+# Shift bits to the right
 create_mask_right:
 	addi $sp, $sp, -4
 	sw $t0, ($sp)
