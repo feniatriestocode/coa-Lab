@@ -1,20 +1,6 @@
-.data
-	d: .asciiz "LII"
-
-.text
-.globl main
-main:
-	la $a0, d
-	li $a1, 0
-	jal roman_to_decimal
-
-	move $a0, $v0
-	li $v0, 1
-	syscall
-
-	li $v0, 10
-	syscall
-
+# a0: The address of the buffer
+# a1: Must be initialized with the value 0
+# $v0: Returns the roman number to decimal
 roman_to_decimal:
 	addi $sp, $sp, -4
 	sw $ra, ($sp)
@@ -22,6 +8,7 @@ roman_to_decimal:
 	lb $t0, ($a0)
 	li $t1, 0
 
+	# Switch case implementation 
 	beq $t0, 'M', M
 	beq $t0, 'D', D
 	beq $t0, 'C', C
@@ -29,7 +16,7 @@ roman_to_decimal:
 	beq $t0, 'X', X
 	beq $t0, 'V', V
 	beq $t0, 'I', I
-	beq $t0, '\0', return
+	beq $t0, '\0', end
 
 	M:
 		li $t0, 1000
@@ -68,23 +55,31 @@ roman_to_decimal:
 		li $a1, 1
 		j out
 
+	# Subtruct carry
 	L1:
 		sub $t1, $t0, $a1
 		j L3
 
+	# Add carry to loaded value
 	L2:
 		add $t1, $a1, $t0
 
+	# Clear a1
 	L3:
 		move $a1, $0
 
+	# Add final value to v0
 	out:
 		add $v0, $v0, $t1
 		addi $a0, $a0, 1
 		jal roman_to_decimal
+		j return
+
+	# When the number finishes, add the remaining carry
+	end:
+		add $v0, $v0, $a1
 
 	return:
-		add $v0, $v0, $t0
 		lw $ra, ($sp)
 		add $sp, $sp, 4
 		jr $ra
