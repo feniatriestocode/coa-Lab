@@ -1,4 +1,4 @@
-# coa-Lab
+# Coa-Lab
 
-Lab 2 - Functions/Stack
-Lab 3 - Recursive functions
+## Lab 2 - Functions/Stack
+## Lab 3 - Recursive functions
