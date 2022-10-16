@@ -4,73 +4,69 @@
 	syscall
 .end_macro
 
-
-	
-
 .macro terminate
 	li $v0, 10
 	syscall
 .end_macro
 
 .data
-	prompt:       .asciiz "Enter roman number.\n"
-	not_a_number: .asciiz "Not a roman number.\n"
-	num_roman:    .asciiz "Is roman number.\n"
-	empty_string: .asciiz "No string found.\n"
-	.align 2
-	buffer:       .space 10
-	string_end: 	.asciiz "/n"
-	null_char:    .asciiz "/0"
-.word 
-
+	prompt:       	.asciiz "Enter roman number.\n"
+	not_a_number: 	.asciiz "Not a roman number.\n"
+	num_roman:    	.asciiz "Is roman number.\n"
+	empty_string: 	.asciiz "No string found.\n"
+	buffer:       	.space 21
 .text
-
 .globl main
+main:
+	L1:
+		printString(prompt)
 
-main: 
-	printString(prompt)
-	li $v0, 8
-	la $a0, buffer
-	li $a1, 10
-	syscall
-	jal check_roman
-	terminate
+		li $v0, 8
+		la $a0, buffer
+		li $a1, 10
+		syscall
+
+		jal check_roman
+		beq $v0, 0, L1
+		# jal roman_to_decimal
+		terminate
 	
 		
 check_roman:
-	addi $sp, $sp, -12
-	sw   $ra, 8($sp)
-	sw   $s0, 4($sp) #store register to preserve its contents
+	addi $sp, $sp, -8
+	sw   $ra, 4($sp)
 	sw   $a0, 0($sp) #store address of beginning of string
 	
-	lb   $s0, 0($a0)    #load first char
-	beq  $s0, 'M', is_roman
-	beq  $s0, 'D', is_roman
-	beq  $s0, 'C', is_roman
-	beq  $s0, 'L', is_roman
-	beq  $s0, 'X', is_roman
-	beq  $s0, 'V', is_roman
-	beq  $s0, 'I', is_roman
-	beq  $s0, '\n', reached_end
+	lb   $t0, ($a0)    #load first char
+
+	beq  $t0, 'M', is_roman
+	beq  $t0, 'D', is_roman
+	beq  $t0, 'C', is_roman
+	beq  $t0, 'L', is_roman
+	beq  $t0, 'X', is_roman
+	beq  $t0, 'V', is_roman
+	beq  $t0, 'I', is_roman
+	beq  $t0, '\n', reached_end
 	
 	#input was no roman number
 	printString(not_a_number)
 	move $v0, $zero 
 	j end
 	
-is_roman:
-	addi $a0, $a0, 1
-	jal check_roman
-	j end
-reached_end:
-	addi $v0, $zero, 1
-	printString(num_roman)
+	is_roman:
+		addi $a0, $a0, 1
+		jal check_roman
+		j end
 
-end:
+	reached_end:
+		printString(num_roman)
+		addi $v0, $zero, 1
+		sb $0, ($a0)
+
 	#reset stack
-	lw   $ra, 8($sp)
-	lw   $s0, 4($sp) 
-	lw   $a0, 0($sp) 
-	addi $sp, $sp, 12
+	end:
+		lw   $ra, 4($sp)
+		lw   $a0, 0($sp)
+		addi $sp, $sp, 8
 
-jr $ra
+	jr $ra
