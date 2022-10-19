@@ -20,8 +20,6 @@ f:
 	addi $a0, $a0, -1
 	jal f
 
-	add $s0, $v0, $s0
-
 	lw $a0, 4($sp)
 	lw $a1, ($sp)
 	addi $sp, $sp, 4
