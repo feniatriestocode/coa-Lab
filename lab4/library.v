@@ -17,7 +17,6 @@ module ALU (out, zero, inA, inB, op);
 
   reg       [N-1:0] out;
 
- // PLACE YOUR VERILOG CODE HERE
 parameter AND = 4'B0000,
           OR  = 4'B0001,
           ADD = 4'B0010,
