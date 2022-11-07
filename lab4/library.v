@@ -45,23 +45,22 @@ module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
 	input clock, reset, wen;
 	input [4:0] raA, raB, wa;
 	input  [31:0] wd;
-	output reg[31:0] rdA, rdB;
+	output [31:0] rdA, rdB;
 
 	integer i;
-	reg [4:0] data[31:0];
+	reg [31:0] data [32];
+
+	assign rdA = data[raA];
+	assign rdB = data[raB];
 
 	always @(negedge clock, negedge reset)
 		begin
 			if (~reset)
 				for (i = 0; i < 32; i = i + 1) 
 					data[i] = 0;
-			else begin
-				if (wen)
-					data[wa] = wd;
-				else
-					rdA = data[raA];
-					rdB = data[raB];
-				end
-		end
+			else if (wen) begin
+				data[wa] = wd;
+			end
+	end
 
 endmodule

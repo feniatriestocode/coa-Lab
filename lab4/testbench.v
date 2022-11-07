@@ -46,7 +46,7 @@ initial begin  // Ta statements apo ayto to begin mexri to "end" einai seiriaka
 end 
 
 always @(*) begin
-   $display ("raA: %d raB: %d rdA: %d rdB: %d wa: %d wen: %d, value: %d", raA, raB, rdA, rdB, wa, wen, regs.data[wa]);
+   $display ("time: %2d raA: %d raB: %d rdA: %d rdB: %d wa: %d wen: %d, value: %d", $time, raA, raB, rdA, rdB, wa, wen, regs.data[wa]);
 	end
 
 initial
