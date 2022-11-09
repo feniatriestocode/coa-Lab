@@ -4,36 +4,34 @@
 
 module cpu_tb;
 
-reg       clock, reset;    // Clock and reset signals
-reg   [4:0] raA, raB, wa;
-reg         wen;
+reg clock, reset;
+reg [4:0] raA, raB, wa;
+reg wen;
 wire signed  [31:0] wd;
 wire signed [31:0] rdA, rdB;
 integer i;
 
 reg [3:0] op;
 wire f_zero;
-// Instantiate regfile module
+
 RegFile regs(clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
 
-// YOU ALSO NEED TO INSTATIATE THE ALU HERE 
 ALU alu(wd, f_zero, rdA, rdB, op);
 
-
-initial begin  // Ta statements apo ayto to begin mexri to "end" einai seiriaka
-    $dumpfile("wave.vcd");
+initial begin
+	$dumpfile("wave.vcd");
 	$dumpvars(0, cpu_tb);
-  // Initialize the module 
-   clock = 1'b0;       
-   reset = 1'b0;  // Apply reset for a few cycles
-   #(4.25*`clock_period) reset = 1'b1;
-   
-   // Force initialization of the Register File
-   for (i = 0; i < 32; i = i+1)
-      regs.data[i] = i;   // Note that always R0 = 0 in MIPS 
 
-  // Now apply some inputs. 
-  // You SHOULD EXTEND this part of the code with extra inputs
+	for (i = 0; i < 32; i = i+1)
+		$dumpvars(0, regs.data[i]);
+
+	clock = 1'b0;
+	reset = 1'b0;
+	#(4.25*`clock_period) reset = 1'b1;
+
+	for (i = 0; i < 32; i = i+1)
+		regs.data[i] = i;
+
    wen = 0; raA = 32'h0; raB = 32'h13; op = 4'h6;
 #(2*`clock_period)
    wa = 32'h1E; wen = 1;
@@ -51,7 +49,7 @@ always @(*) begin
 
 initial
 	#80 $finish;
-// Generate clock by inverting the signal every half of clock period
+
 always 
    #(`clock_period / 2) clock = ~clock;  
 
