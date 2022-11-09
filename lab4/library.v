@@ -2,8 +2,8 @@
 
 module ALU (out, zero, inA, inB, op);
 	parameter N = 32;
-    output signed [N-1:0] out;
-	output    zero;
+	output signed [N-1:0] out;
+	output zero;
 	input signed [N-1:0] inA, inB;
 	input [3:0] op;
 
@@ -11,8 +11,8 @@ module ALU (out, zero, inA, inB, op);
 
 	parameter AND = 4'B0000,
 			  OR  = 4'B0001,
-	          ADD = 4'B0010,
-	          SUB = 4'B0110,
+			  ADD = 4'B0010,
+			  SUB = 4'B0110,
 			  SLT = 4'B0111,
 			  NOR = 4'B1100;
 
@@ -26,15 +26,15 @@ module ALU (out, zero, inA, inB, op);
 			AND:
 				out = inA & inB;
 			OR:
-		    	out = inA | inB;
+				out = inA | inB;
 			ADD:
-		    	out = inA + inB;
+				out = inA + inB;
 			SUB:
 				out = inA + (~inB + 1);
 			SLT:
-		    	out = (inA + (~inB + 1) >= 0) ? 0 : 1;
+				out = (inA + (~inB + 1) >= 0) ? 0 : 1;
 			NOR:
-		    	out = ~(inA | inB);
+				out = ~(inA | inB);
 			default: out = {N{1'BX}};
 		endcase
 	end
