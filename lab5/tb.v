@@ -75,4 +75,10 @@ initial
 
 end  // initial 
 
+initial
+	#80 $finish;
+
+always
+	#(`clock_period / 2) clock = ~clock;
+
 endmodule

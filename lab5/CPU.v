@@ -18,8 +18,8 @@ module sign_ext (input [15:0] in, output [31:0] out);
 		out = {16'h0000, out};
 endmodule
 
-// Small ALU. 
-//     Inputs: inA, inB, op. 
+// Small ALU.
+//     Inputs: inA, inB, op.
 //     Output: out, zero
 // Operations: bitwise and (op = 0)
 //             bitwise or  (op = 1)
@@ -127,21 +127,19 @@ endmodule
 // Module to control the data path. 
 //                          Input: op, func of the inpstruction
 //                          Output: all the control signals needed 
-module Ctrl_unit(
-			output branch,
-			output MemRead,
-			output MemtoReg,
-			output ALUop,
-			output MemWrite,
-			output ALUSrc,
-			output RegWrite,
-			input [5:0] opcode);
+module Ctrl_unit (output branch, output MemRead,
+output MemtoReg,
+output ALUop,
+output MemWrite,
+output ALUSrc,
+output RegWrite, input [5:0] opcode);
 
 	case (opcode)
 		R_FORMAT:
 			ALUop = 1'b1;
 			ALUSrc = 1'b0;
 			RegWrite = 1'b1;
+			#(2 * `clock_period / 2) RegWrite = 1'b0;
 		LW:
 
 		SW:
@@ -163,5 +161,4 @@ module CPU(clock, reset, );
 	RegFile cpu_regs();
 	Ctrl_unit ctr_uni();
 	ALU alu();
-
 endmodule
