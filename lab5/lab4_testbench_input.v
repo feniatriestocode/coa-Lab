@@ -8,11 +8,11 @@
 `timescale 1ns/1ps
 
 module cpu_tb;
-integer   i;
-reg       clock, reset;    // Clock and reset signals
+integer i;
+reg clock, reset;// Clock and reset signals
 
 // Instantiate CPU here with name cpu0
-CPU cpu0 ....
+CPU cpu0 ();
 
 // Initialization and signal generation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
