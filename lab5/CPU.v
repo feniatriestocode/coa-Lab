@@ -3,8 +3,19 @@
 `include "constants.h"
 `timescale 1ns/1ps
 
-module 32mux(input [31:0] in0, input [31:0] in1, input sel, output [31:0] out);
-	out = sel ? in0 : in1;
+module mux_5 (input [4:0] in0, input [4:0] in1, input sel, output [4:0] out);
+	out = sel ? in1 : in0;
+endmodule
+
+module mux_32 (input [31:0] in0, input [31:0] in1, input sel, output [31:0] out);
+	out = sel ? in1 : in0;
+endmodule
+
+module sign_ext (input [15:0] in, output [31:0] out);
+	if (in[15])
+		out = {16'hFFFF, out};
+	else
+		out = {16'h0000, out};
 endmodule
 
 // Small ALU. 
@@ -16,9 +27,10 @@ endmodule
 //             subtraction (op = 6)
 //             slt  (op = 7)
 //             nor (op = 12)
-module ALU (out, zero, inA, inB, func);
+module ALU (out, zero, enable, inA, inB, func);
 	output signed [31:0] out;
 	output zero;
+	input enable;
 	input signed [31:0] inA, inB;
 	input [5:0] func;
 
@@ -26,7 +38,7 @@ module ALU (out, zero, inA, inB, func);
 
 	assign zero = (out == 0);
 
-	always @ (*) begin
+	always @ (posedge enable) begin
 		case(func)
 			AND:
 				out = inA & inB;
@@ -43,7 +55,6 @@ module ALU (out, zero, inA, inB, func);
 			default: out = {32{1'BX}};
 		endcase
 	end
-
 endmodule
 
 // Memory (active 1024 words, from 10 address ).
@@ -72,7 +83,6 @@ module Memory (ren, wen, addr, din, dout);
 		if ((wen == 1'b1) && (ren==1'b0))
 			data[addr[9:0]] = din;
 	end
-
 endmodule
 // Register File. Input ports: address raA, data rdA
 //                            address raB, data rdB
@@ -97,7 +107,6 @@ module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
 				data[wa] = wd;
 			end
 		end
-
 endmodule
 
 module PC (clock, reset, out, addr);
@@ -113,7 +122,6 @@ module PC (clock, reset, out, addr);
 		end
 	always
 		out = addr;
-
 endmodule
 
 // Module to control the data path. 
@@ -133,6 +141,7 @@ module Ctrl_unit(
 		R_FORMAT:
 			ALUop = 1'b1;
 			ALUSrc = 1'b0;
+			RegWrite = 1'b1;
 		LW:
 
 		SW:
@@ -142,9 +151,9 @@ module Ctrl_unit(
 		BNE:
 			branch = 1'b1;
 		ADDI:
+
 		NOP:
 	endcase
-
 endmodule
 
 module CPU(clock, reset, );
