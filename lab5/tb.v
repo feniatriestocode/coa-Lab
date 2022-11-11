@@ -19,6 +19,9 @@ CPU cpu0 ();
 
 // Generate clock and reset signal here
 
+always
+	#(clock_period / 2) clock = ~clock;
+
   // Initialize Register File with initial values. 
   // cpu0 is the name of the cpu instance
   // cpu_regs is the name of the register file instance in the CPU verilog file 
@@ -77,8 +80,4 @@ end  // initial
 
 initial
 	#80 $finish;
-
-always
-	#(`clock_period / 2) clock = ~clock;
-
 endmodule

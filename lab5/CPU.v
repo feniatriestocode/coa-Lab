@@ -1,36 +1,10 @@
-// This file contains library modules to be used in your design. 
-
 `include "constants.h"
 `timescale 1ns/1ps
 
-module mux_5 (input [4:0] in0, input [4:0] in1, input sel, output [4:0] out);
-	out = sel ? in1 : in0;
-endmodule
-
-module mux_32 (input [31:0] in0, input [31:0] in1, input sel, output [31:0] out);
-	out = sel ? in1 : in0;
-endmodule
-
-module sign_ext (input [15:0] in, output [31:0] out);
-	if (in[15])
-		out = {16'hFFFF, out};
-	else
-		out = {16'h0000, out};
-endmodule
-
-// Small ALU.
-//     Inputs: inA, inB, op.
-//     Output: out, zero
-// Operations: bitwise and (op = 0)
-//             bitwise or  (op = 1)
-//             addition (op = 2)
-//             subtraction (op = 6)
-//             slt  (op = 7)
-//             nor (op = 12)
-module ALU (out, zero, enable, inA, inB, func);
+module ALU (out, zero, ALUen, inA, inB, func);
 	output signed [31:0] out;
 	output zero;
-	input enable;
+	input ALUen;
 	input signed [31:0] inA, inB;
 	input [5:0] func;
 
@@ -38,19 +12,19 @@ module ALU (out, zero, enable, inA, inB, func);
 
 	assign zero = (out == 0);
 
-	always @ (posedge enable) begin
+	always @ (posedge ALUen) begin
 		case(func)
-			AND:
+			`AND:
 				out = inA & inB;
-			OR:
+			`OR:
 				out = inA | inB;
-			ADD:
+			`ADD:
 				out = inA + inB;
-			SUB:
+			`SUB:
 				out = inA + (~inB + 1);
-			SLT:
+			`SLT:
 				out = (inA + (~inB + 1) >= 0) ? 0 : 1;
-			NOR:
+			`NOR:
 				out = ~(inA | inB);
 			default: out = {32{1'BX}};
 		endcase
@@ -84,16 +58,14 @@ module Memory (ren, wen, addr, din, dout);
 			data[addr[9:0]] = din;
 	end
 endmodule
-// Register File. Input ports: address raA, data rdA
-//                            address raB, data rdB
-//                Write port: address wa, data wd, enable wen.
+
 module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
 	input clock, reset, wen;
 	input [4:0] raA, raB, wa;
 	input signed [31:0] wd;
 	output signed [31:0] rdA, rdB;
 	integer i;
-	reg signed [31:0] data[32];
+	reg signed [31:0] data[31:0];
 
 	assign rdA = data[raA];
 	assign rdB = data[raB];
@@ -119,46 +91,97 @@ module PC (clock, reset, out, addr);
 		begin
 			if (~reset)
 				out = 32'h0;
+			else
+				out = addr;
 		end
-	always
-		out = addr;
 endmodule
 
 // Module to control the data path. 
 //                          Input: op, func of the inpstruction
 //                          Output: all the control signals needed 
-module Ctrl_unit (output branch, output MemRead,
-output MemtoReg,
-output ALUop,
-output MemWrite,
-output ALUSrc,
-output RegWrite, input [5:0] opcode);
+module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output ALUop, output MemWrite, output ALUSrc, output RegWrite, input [5:0] opcode);
 
-	case (opcode)
-		R_FORMAT:
-			ALUop = 1'b1;
-			ALUSrc = 1'b0;
-			RegWrite = 1'b1;
-			#(2 * `clock_period / 2) RegWrite = 1'b0;
-		LW:
+	reg branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegDest, ALUop, RegWrite;
 
-		SW:
-
-		BEQ:
-			branch = 1'b1;
-		BNE:
-			branch = 1'b1;
-		ADDI:
-
-		NOP:
-	endcase
+	always @(*) begin
+		case (opcode)
+			`R_FORMAT:
+				begin
+					MemRead = 1'b0;
+					branch = 1'b0;
+					MemtoReg = 1'b0;
+					MemWrite = 1'b0;
+					ALUSrc = 1'b0;
+					RegDest = 1'b1;
+					ALUop = 1'b1;
+					RegWrite = 1'b1;
+					#(`clock_period / 2) RegWrite = 1'b0;
+				end
+			`LW:
+				begin
+					MemRead = 1'b1;
+					branch = 1'b0;
+					MemtoReg = 1'b1;
+					MemWrite = 1'b0;
+					ALUSrc = 1'b1;
+					RegDest = 1'b0;
+					ALUop = 1'b1;
+					RegWrite = 1'b1;
+					#(`clock_period / 2) RegWrite = 1'b0;
+				end
+			`SW:
+				begin
+				end
+			`BEQ:
+				begin
+					branch = 1'b1;
+				end
+			`BNE:
+				begin
+					branch = 1'b1;
+				end
+			`ADDI:
+				begin
+					RegDest = 1'b0;
+					branch = 1'b0;
+					MemRead = 1'b0;
+					MemtoReg = 1'b0;
+					MemWrite = 1'b0;
+					ALUSrc = 1'b0;
+					ALUop = 1'b1;
+					RegWrite = 1'b1;
+					#(`clock_period / 2) RegWrite = 1'b0;
+				end
+			`NOP:
+				begin
+				end
+		endcase
+	end
 endmodule
 
-module CPU(clock, reset, );
+module CPU(input clock, input reset);
 
-	PC pc();
-	Memory cpu_Imem();
-	RegFile cpu_regs();
-	Ctrl_unit ctr_uni();
-	ALU alu();
+	wire [4:0] raA, raB, wa;
+	wire [31:0] rdA, rdB, ALUout, PCout, SIGout, MEMout, InstOut, ALUin2, addr, wd;
+	wire zero, ALUop, RegDest, branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegWrite, BrOUT;
+
+	assign PCout4 = PCout + 4;
+	assign BrOUT = branch & zero;
+
+	assign SIGout = InstOut[15] ? {16'hFFFF, InstOut} : {16'h0000, InstOut};
+
+	assign ALUin2 = ALUsrc ? SIGout : rdB;
+	assign wd = MemtoReg ? MEMout : ALUout;
+	assign addr = BrOUT ? (SIGout << 2) + PCout4 : PCout4;
+
+	assign wa = RegDest ? InstOut[15:11] : InstOut[20:15];
+
+	PC pc (clock, reset, PCout, addr);
+	Memory cpu_Imem (1'b1, 1'b0, PCout, 32'h0, InstOut);
+
+	Ctrl_unit ctr_uni (RegDest, branch, MemRead, MemtoReg, ALUop, MemWrite, ALUSrc, RegWrite, InstOut[31:26]);
+
+	RegFile cpu_regs (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
+
+	ALU alu (ALUout, zero, ALUop, rdA, ALUin2, InstOut[5:0]);
 endmodule
