@@ -1,0 +1,174 @@
+$date
+	Mon Nov 14 17:56:09 2022
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module cpu_tb $end
+$var reg 1 ! clock $end
+$var reg 1 " reset $end
+$var integer 32 # i [31:0] $end
+$scope module cpu0 $end
+$var wire 1 $ BrOUT $end
+$var wire 1 ! clock $end
+$var wire 5 % raA [4:0] $end
+$var wire 5 & raB [4:0] $end
+$var wire 1 " reset $end
+$var wire 1 ' wen $end
+$var wire 1 ( zero $end
+$var wire 32 ) wd [31:0] $end
+$var wire 5 * wa [4:0] $end
+$var wire 32 + rdB [31:0] $end
+$var wire 32 , rdA [31:0] $end
+$var wire 4 - func [3:0] $end
+$var wire 1 . branch $end
+$var wire 32 / addr [31:0] $end
+$var wire 32 0 SIGout [31:0] $end
+$var wire 1 1 RegWrite $end
+$var wire 1 2 RegDest $end
+$var wire 1 3 PCout4 $end
+$var wire 32 4 PCout [31:0] $end
+$var wire 1 5 MemtoReg $end
+$var wire 1 6 MemWrite $end
+$var wire 1 7 MemRead $end
+$var wire 32 8 MEMout [31:0] $end
+$var wire 32 9 InstOut [31:0] $end
+$var wire 32 : ALUout [31:0] $end
+$var wire 32 ; ALUin2 [31:0] $end
+$var wire 1 < ALUSrc $end
+$scope module alu $end
+$var wire 1 = ALUen $end
+$var wire 32 > inB [31:0] $end
+$var wire 1 ( zero $end
+$var wire 32 ? inA [31:0] $end
+$var wire 4 @ func [3:0] $end
+$var reg 32 A out [31:0] $end
+$upscope $end
+$scope module cpu_IMem $end
+$var wire 32 B din [31:0] $end
+$var wire 1 C ren $end
+$var wire 1 D wen $end
+$var wire 32 E dout [31:0] $end
+$var wire 32 F addr [31:0] $end
+$upscope $end
+$scope module cpu_regs $end
+$var wire 1 ! clock $end
+$var wire 5 G raA [4:0] $end
+$var wire 5 H raB [4:0] $end
+$var wire 32 I rdA [31:0] $end
+$var wire 32 J rdB [31:0] $end
+$var wire 1 " reset $end
+$var wire 5 K wa [4:0] $end
+$var wire 32 L wd [31:0] $end
+$var wire 1 ' wen $end
+$var integer 32 M i [31:0] $end
+$upscope $end
+$scope module ctr_uni $end
+$var wire 6 N func [5:0] $end
+$var wire 6 O opcode [5:0] $end
+$var reg 1 < ALUSrc $end
+$var reg 4 P ALUctr [3:0] $end
+$var reg 2 Q ALUop [1:0] $end
+$var reg 1 7 MemRead $end
+$var reg 1 6 MemWrite $end
+$var reg 1 5 MemtoReg $end
+$var reg 1 2 RegDest $end
+$var reg 1 1 RegWrite $end
+$var reg 1 . branch $end
+$upscope $end
+$scope module mem $end
+$var wire 32 R addr [31:0] $end
+$var wire 32 S din [31:0] $end
+$var wire 1 7 ren $end
+$var wire 1 6 wen $end
+$var wire 32 T dout [31:0] $end
+$upscope $end
+$scope module pc $end
+$var wire 32 U addr [31:0] $end
+$var wire 1 ! clock $end
+$var wire 1 " reset $end
+$var reg 32 V out [31:0] $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+b0 V
+bx U
+bx T
+bx S
+bx R
+bx Q
+bx P
+bx O
+bx N
+b100000 M
+bx L
+bx K
+bx J
+bx I
+bz H
+bz G
+b0 F
+bx E
+0D
+1C
+b0 B
+bx A
+bx @
+bx ?
+bx >
+z=
+x<
+bx ;
+bx :
+bx 9
+bx 8
+x7
+x6
+x5
+b0 4
+03
+x2
+x1
+bx 0
+bx /
+x.
+bx -
+bx ,
+bx +
+bx *
+bx )
+x(
+z'
+bz &
+bz %
+x$
+b100000 #
+0"
+0!
+$end
+#10000
+1!
+#20000
+b100000 M
+0!
+#30000
+1!
+#40000
+b100000 M
+0!
+#50000
+1!
+#60000
+b100000 M
+0!
+#70000
+1!
+#80000
+b100000 M
+0!
