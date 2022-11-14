@@ -88,7 +88,7 @@ module PC (clock, reset, out, addr);
 			if (~reset)
 				out = 32'h0;
 			else
-				out = addr;
+				out = addr + 1;
 		end
 endmodule
 
