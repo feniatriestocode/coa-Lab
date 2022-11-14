@@ -4,7 +4,6 @@
 module ALU (out, zero, inA, inB, func);
 	output signed [31:0] out;
 	output zero;
-	input ALUen;
 	input signed [31:0] inA, inB;
 	input [3:0] func;
 
@@ -96,7 +95,6 @@ endmodule
 module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, input [5:0] opcode, input [5:0] func);
 
 	reg branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegDest, RegWrite;
-	reg [1:0] ALUop;
 	reg [3:0] ALUctr;
 
 	always @(*) begin
@@ -109,7 +107,6 @@ module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg
 					MemWrite = 1'b0;
 					ALUSrc = 1'b0;
 					RegDest = 1'b1;
-					ALUop = 2'b10;
 					RegWrite = 1'b1;
 					#(`clock_period) RegWrite = 1'b0;
 				end
@@ -121,7 +118,6 @@ module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg
 					MemWrite = 1'b0;
 					ALUSrc = 1'b1;
 					RegDest = 1'b0;
-					ALUop = 2'b00;
 					RegWrite = 1'b1;
 					#(`clock_period) RegWrite = 1'b0;
 				end
@@ -133,7 +129,6 @@ module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg
 					MemWrite = 1'b1;
 					ALUSrc = 1'b1;
 					RegDest = 1'bX;
-					ALUop = 2'b00;
 					RegWrite = 1'b0;
 					#(`clock_period) RegWrite = 1'b0;
 				end
@@ -145,7 +140,6 @@ module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg
 					MemWrite = 1'b1;
 					ALUSrc = 1'b0;
 					RegDest = 1'bX;
-					ALUop = 2'b01;
 					RegWrite = 1'b0;
 				end
 			`BNE:
@@ -160,7 +154,6 @@ module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg
 					MemtoReg = 1'b0;
 					MemWrite = 1'b0;
 					ALUSrc = 1'b1;
-					ALUop = 2'b00;
 					RegWrite = 1'b1;
 					#(`clock_period) RegWrite = 1'b0;
 				end
@@ -172,10 +165,17 @@ module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg
 
 	always @(*)
 	begin
-		case (ALUop)
+		case (func[5:4])
 			2'b00: ALUctr = `ADD;
 			2'b01: ALUctr = `SUB;
-			2'b10: ALUctr = func;
+			2'b10:
+					case (func[3:0])
+						4'b0000: ALUctr = `ADD;
+						4'b0010: ALUctr = `SUB;
+						4'b0100: ALUctr = `AND;
+						4'b0101: ALUctr = `OR;
+						4'b1010: ALUctr = `SLT;
+					endcase
 		endcase
 	end
 endmodule
