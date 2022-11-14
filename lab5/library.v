@@ -88,94 +88,114 @@ module PC (clock, reset, out, addr);
 			if (~reset)
 				out = 32'h0;
 			else
-				out = addr + 1;
+				#(`clock_period) out = addr + 1;
 		end
 endmodule
 
-module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, input [5:0] opcode, input [5:0] func);
+module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, input [5:0] opcode, input [5:0] func, input reset);
 
 	reg branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegDest, RegWrite;
 	reg [3:0] ALUctr;
+	reg [1:0] ALUop;
 
 	always @(*) begin
-		case (opcode)
-			`R_FORMAT:
-				begin
-					MemRead = 1'bX;
-					branch = 1'b0;
-					MemtoReg = 1'b0;
-					MemWrite = 1'b0;
-					ALUSrc = 1'b0;
-					RegDest = 1'b1;
-					RegWrite = 1'b1;
-					#(`clock_period) RegWrite = 1'b0;
-				end
-			`LW:
-				begin
-					MemRead = 1'b1;
-					branch = 1'b0;
-					MemtoReg = 1'b1;
-					MemWrite = 1'b0;
-					ALUSrc = 1'b1;
-					RegDest = 1'b0;
-					RegWrite = 1'b1;
-					#(`clock_period) RegWrite = 1'b0;
-				end
-			`SW:
-				begin
-					MemRead = 1'b0;
-					branch = 1'b0;
-					MemtoReg = 1'bX;
-					MemWrite = 1'b1;
-					ALUSrc = 1'b1;
-					RegDest = 1'bX;
-					RegWrite = 1'b0;
-					#(`clock_period) RegWrite = 1'b0;
-				end
-			`BEQ:
-				begin
-					branch = 1'b1;
-					MemRead = 1'b0;
-					MemtoReg = 1'bX;
-					MemWrite = 1'b1;
-					ALUSrc = 1'b0;
-					RegDest = 1'bX;
-					RegWrite = 1'b0;
-				end
-			`BNE:
-				begin
-					branch = 1'b1;
-				end
-			`ADDI:
-				begin
-					RegDest = 1'b0;
-					branch = 1'b0;
-					MemRead = 1'b0;
-					MemtoReg = 1'b0;
-					MemWrite = 1'b0;
-					ALUSrc = 1'b1;
-					RegWrite = 1'b1;
-					#(`clock_period) RegWrite = 1'b0;
-				end
-			`NOP:
-				begin
-				end
-		endcase
+		if (~reset)
+			begin
+				MemRead = 1'b0;
+				branch = 1'b0;
+				MemtoReg = 1'b0;
+				MemWrite = 1'b0;
+				ALUSrc = 1'b0;
+				RegDest = 1'b0;
+				RegWrite = 1'b0;
+				ALUop = 2'b00;
+			end
+		else
+			begin
+				case (opcode)
+					`R_FORMAT:
+						begin
+							MemRead = 1'bX;
+							branch = 1'b0;
+							MemtoReg = 1'b0;
+							MemWrite = 1'b0;
+							ALUSrc = 1'b0;
+							RegDest = 1'b1;
+							ALUop = 2'b10;
+							#(`clock_period / 4)RegWrite = 1'b1;
+							#(`clock_period / 2) RegWrite = 1'b0;
+						end
+					`LW:
+						begin
+							MemRead = 1'b1;
+							branch = 1'b0;
+							MemtoReg = 1'b1;
+							MemWrite = 1'b0;
+							ALUSrc = 1'b1;
+							RegDest = 1'b0;
+							ALUop = 2'b00;
+							#(`clock_period / 4)RegWrite = 1'b1;
+							#(`clock_period / 2) RegWrite = 1'b0;
+						end
+					`SW:
+						begin
+							MemRead = 1'b0;
+							branch = 1'b0;
+							MemtoReg = 1'bX;
+							MemWrite = 1'b1;
+							ALUop = 2'b00;
+							ALUSrc = 1'b1;
+							RegDest = 1'bX;
+							RegWrite = 1'b0;
+						end
+					`BEQ:
+						begin
+							branch = 1'b1;
+							MemRead = 1'b0;
+							MemtoReg = 1'bX;
+							MemWrite = 1'b1;
+							ALUop = 2'b01;
+							ALUSrc = 1'b0;
+							RegDest = 1'bX;
+							RegWrite = 1'b0;
+						end
+					`BNE:
+						begin
+							branch = 1'b1;
+							ALUop = 2'b01;
+						end
+					`ADDI:
+						begin
+							RegDest = 1'b0;
+							branch = 1'b0;
+							MemRead = 1'b0;
+							MemtoReg = 1'b0;
+							MemWrite = 1'b0;
+							ALUSrc = 1'b1;
+							ALUop = 2'b00;
+							#(`clock_period / 4) RegWrite = 1'b1;
+							#(`clock_period / 2) RegWrite = 1'b0;
+						end
+					`NOP:
+						begin
+						end
+				endcase
+			end
 	end
 
 	always @(*)
-	begin
-		case (func[5:4])
-			2'b00: ALUctr = `ADD;
-			2'b01: ALUctr = `SUB;
-			2'b10:
-					case (func[3:0])
-						4'b0000: ALUctr = `ADD;
-						4'b0010: ALUctr = `SUB;
-						4'b0100: ALUctr = `AND;
-						4'b0101: ALUctr = `OR;
-						4'b1010: ALUctr = `SLT;
-					endcase
-		endcase
-	end
+		begin
+			case (ALUop)
+				2'b00: ALUctr = `ADD;
+				2'b01: ALUctr = `SUB;
+				2'b10:
+						case (func[3:0])
+							4'b0000: ALUctr = `ADD;
+							4'b0010: ALUctr = `SUB;
+							4'b0100: ALUctr = `AND;
+							4'b0101: ALUctr = `OR;
+							4'b1010: ALUctr = `SLT;
+						endcase
+			endcase
+		end
 endmodule

@@ -10,7 +10,7 @@ module cpu_tb;
 	initial begin
 		clock = 1'b0;
 		reset = 1'b0;
-		#(2*`clock_period) reset = 1'b1;
+		#(`clock_period / 2) reset = 1'b1;
 
 		for (i = 0; i < 32; i = i+1)
 			cpu0.cpu_regs.data[i] = i;
@@ -33,5 +33,5 @@ module cpu_tb;
 	end  // initial
 
 	initial
-		#80 $finish;
+		#140 $finish;
 endmodule
