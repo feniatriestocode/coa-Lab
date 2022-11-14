@@ -10,7 +10,6 @@
 module cpu_tb;
 	integer i;
 	reg clock, reset;
-	reg [31:0] data [31:0];
 
 	CPU cpu0 (clock, reset);
 
@@ -28,9 +27,15 @@ initial
 		for (i = 0; i < 32; i = i+1)
 			cpu0.cpu_regs.data[i] = i;
 
-	$readmemh("program.hex", cpu0.cpu_IMem.data);
+	$readmemh("/home/christos/sxolh/3sem/Organosi/Labs/Coa-Lab/lab5/123.txt", cpu0.cpu_IMem.data);
 
-	$dumpvars;
+	$dumpvars(0, cpu_tb);
+
+	for (i = 0; i < 32; i = i+1)
+		$dumpvars(0, cpu0.cpu_regs.data[i]);
+
+	for (i = 0; i < 4096; i = i + 1)
+		$dumpvars(0, cpu0.cpu_IMem.data[i]);
 
 end  // initial
 
