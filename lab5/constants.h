@@ -9,6 +9,7 @@
 `define BNE			6'b000101
 `define ADDI		6'b001000
 `define NOP			6'b010000
+`define J			6'b000010
 `define AND			4'b0000
 `define OR			4'b0001
 `define ADD			4'b0010
