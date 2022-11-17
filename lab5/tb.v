@@ -20,7 +20,7 @@ module cpu_tb;
 		#(`clock_period / 2) clock = ~clock;
 
 	initial begin
-		$readmemh("/home/christos/sxolh/3sem/Organosi/Labs/Coa-Lab/lab5/123.txt", cpu0.cpu_IMem.data);
+		$readmemh("PATH/program.hex", cpu0.cpu_IMem.data);
 
 		$dumpvars(0, cpu_tb);
 

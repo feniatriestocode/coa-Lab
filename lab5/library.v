@@ -35,7 +35,7 @@ module Memory (clock, ren, wen, addr, din, dout);
 	input [31:0] addr, din;
 	output [31:0] dout;
 
-	reg [7:0] data[4095:0];
+	reg [31:0] data[4095:0];
 	wire [31:0] dout;
 
 	always @(ren or wen)
@@ -47,19 +47,13 @@ module Memory (clock, ren, wen, addr, din, dout);
 			$display("Memory WARNING (time %0d): address msbs are not zero\n", $time);
 	end
 
-	assign dout = ((wen==1'b0) && (ren==1'b1)) ? {data[addr[9:0]], data[addr[9:0] + 1], data[addr[9:0] + 2], data[addr[9:0] + 3]} : 32'bx;
+	assign dout = ((wen==1'b0) && (ren==1'b1)) ? data[addr[9:0]] : 32'bx;
 
-	always @ (addr)
-		$display ("%h %h %h %h", data[addr[9:0]], data[addr[9:0] + 1], data[addr[9:0] + 2], data[addr[9:0] + 3]);
-
-	always @(negedge clock) begin
-		if ((wen == 1'b1) && (ren==1'b0)) begin
-			data[addr[9:0]] = din[31:24];
-			data[addr[9:0] + 1] = din[23:16];
-			data[addr[9:0] + 2] = din[15:8];
-			data[addr[9:0] + 3] = din[7:0];
+	always @(negedge clock)
+		begin
+			if ((wen == 1'b1) && (ren==1'b0))
+				data[addr[9:0]] = din;
 		end
-	end
 endmodule
 
 module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
@@ -84,143 +78,137 @@ module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
 		end
 endmodule
 
-module PC (clock, reset, out, addr);
-	input [31:0] addr;
-	input clock, reset;
-	output reg [31:0] out;
-	integer i;
-
-	always @(posedge clock, negedge reset)
-		begin
-			if (~reset)
-				out = 32'h0;
-			else
-				#(`clock_period) out = addr;
-		end
-endmodule
-
-module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, output BneEn, output jump, input [5:0] opcode, input [5:0] func, input reset);
+module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, output BneEn, output jump, input [5:0] opcode, input [5:0] func);
 
 	reg branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegDest, RegWrite, BneEn, jump;
 	reg [3:0] ALUctr;
 	reg [1:0] ALUop;
 
 	always @(*) begin
-		if (~reset)
-			begin
-				MemRead = 1'b0;
-				jump = 1'b0;
-				BneEn = 1'b0;
-				branch = 1'b0;
-				MemtoReg = 1'b0;
-				MemWrite = 1'b0;
-				ALUSrc = 1'b0;
-				RegDest = 1'b0;
-				RegWrite = 1'b0;
-				ALUop = 2'b00;
-			end
-		else
-			begin
-				case (opcode)
-					`R_FORMAT:
-						begin
-							MemRead = 1'bX;
-							jump = 1'b0;
-							branch = 1'b0;
-							BneEn = 1'bX;
-							MemtoReg = 1'b0;
-							MemWrite = 1'b0;
-							ALUSrc = 1'b0;
-							RegDest = 1'b1;
-							ALUop = 2'b10;
-							#(`clock_period / 4)RegWrite = 1'b1;
-							#(`clock_period / 2) RegWrite = 1'b0;
-						end
-					`LW:
-						begin
-							MemRead = 1'b1;
-							jump = 1'b0;
-							branch = 1'b0;
-							BneEn = 1'bX;
-							MemtoReg = 1'b1;
-							MemWrite = 1'b0;
-							ALUSrc = 1'b1;
-							RegDest = 1'b0;
-							ALUop = 2'b00;
-							#(`clock_period / 4)RegWrite = 1'b1;
-							#(`clock_period / 2) RegWrite = 1'b0;
-						end
-					`SW:
-						begin
-							MemRead = 1'b0;
-							jump = 1'b0;
-							branch = 1'b0;
-							BneEn = 1'bX;
-							MemtoReg = 1'bX;
-							MemWrite = 1'b1;
-							ALUop = 2'b00;
-							ALUSrc = 1'b1;
-							RegDest = 1'bX;
-							RegWrite = 1'b0;
-						end
-					`BEQ:
-						begin
-							branch = 1'b1;
-							jump = 1'b0;
-							BneEn = 1'b0;
-							MemRead = 1'b0;
-							MemtoReg = 1'bX;
-							MemWrite = 1'b1;
-							ALUop = 2'b01;
-							ALUSrc = 1'b0;
-							RegDest = 1'bX;
-							RegWrite = 1'b0;
-						end
-					`BNE:
-						begin
-							branch = 1'b1;
-							jump = 1'b0;
-							BneEn = 1'b1;
-							MemRead = 1'b0;
-							MemtoReg = 1'bX;
-							MemWrite = 1'b1;
-							ALUop = 2'b01;
-							ALUSrc = 1'b0;
-							RegDest = 1'bX;
-							RegWrite = 1'b0;
-						end
-					`ADDI:
-						begin
-							RegDest = 1'b0;
-							jump = 1'b0;
-							branch = 1'b0;
-							BneEn = 1'bX;
-							MemRead = 1'b0;
-							MemtoReg = 1'b0;
-							MemWrite = 1'b0;
-							ALUSrc = 1'b1;
-							ALUop = 2'b00;
-							#(`clock_period / 4) RegWrite = 1'b1;
-							#(`clock_period / 2) RegWrite = 1'b0;
-						end
-					`J:
-						begin
-							MemRead = 1'bX;
-							jump = 1'b1;
-							BneEn = 1'bX;
-							branch = 1'bX;
-							MemtoReg = 1'bX;
-							MemWrite = 1'b0;
-							ALUSrc = 1'bX;
-							RegDest = 1'bX;
-							RegWrite = 1'b0;
-							ALUop = 2'bXX;
-						end
-					`NOP:
-						begin
-						end
-				endcase
-			end
+		begin
+			case (opcode)
+				`R_FORMAT:
+					begin
+						MemRead = 1'bX;
+						jump = 1'b0;
+						branch = 1'b0;
+						BneEn = 1'bX;
+						MemtoReg = 1'b0;
+						MemWrite = 1'b0;
+						ALUSrc = 1'b0;
+						RegDest = 1'b1;
+						ALUop = 2'b10;
+						#(`clock_period / 4) RegWrite = 1'b1;
+						#(`clock_period / 2) RegWrite = 1'b0;
+					end
+				`LW:
+					begin
+						MemRead = 1'b1;
+						jump = 1'b0;
+						branch = 1'b0;
+						BneEn = 1'bX;
+						MemtoReg = 1'b1;
+						MemWrite = 1'b0;
+						ALUSrc = 1'b1;
+						RegDest = 1'b0;
+						ALUop = 2'b00;
+						#(`clock_period / 4) RegWrite = 1'b1;
+						#(`clock_period / 2) RegWrite = 1'b0;
+					end
+				`SW:
+					begin
+						MemRead = 1'b0;
+						jump = 1'b0;
+						branch = 1'b0;
+						BneEn = 1'bX;
+						MemtoReg = 1'bX;
+						MemWrite = 1'b1;
+						ALUop = 2'b00;
+						ALUSrc = 1'b1;
+						RegDest = 1'bX;
+						RegWrite = 1'b0;
+					end
+				`BEQ:
+					begin
+						branch = 1'b1;
+						jump = 1'b0;
+						BneEn = 1'b0;
+						MemRead = 1'b0;
+						MemtoReg = 1'bX;
+						MemWrite = 1'b1;
+						ALUop = 2'b01;
+						ALUSrc = 1'b0;
+						RegDest = 1'bX;
+						RegWrite = 1'b0;
+					end
+				`BNE:
+					begin
+						branch = 1'b1;
+						jump = 1'b0;
+						BneEn = 1'b1;
+						MemRead = 1'b0;
+						MemtoReg = 1'bX;
+						MemWrite = 1'b1;
+						ALUop = 2'b01;
+						ALUSrc = 1'b0;
+						RegDest = 1'bX;
+						RegWrite = 1'b0;
+					end
+				`ADDI:
+					begin
+						RegDest = 1'b0;
+						jump = 1'b0;
+						branch = 1'b0;
+						BneEn = 1'bX;
+						MemRead = 1'b0;
+						MemtoReg = 1'b0;
+						MemWrite = 1'b0;
+						ALUSrc = 1'b1;
+						ALUop = 2'b00;
+						#(`clock_period / 4) RegWrite = 1'b1;
+						#(`clock_period / 2) RegWrite = 1'b0;
+					end
+				`J:
+					begin
+						MemRead = 1'bX;
+						jump = 1'b1;
+						BneEn = 1'bX;
+						branch = 1'bX;
+						MemtoReg = 1'bX;
+						MemWrite = 1'b0;
+						ALUSrc = 1'bX;
+						RegDest = 1'bX;
+						RegWrite = 1'b0;
+						ALUop = 2'bXX;
+					end
+				`NOP:
+					begin
+						MemRead = 1'b0;
+						jump = 1'b0;
+						BneEn = 1'b0;
+						branch = 1'b0;
+						MemtoReg = 1'b0;
+						MemWrite = 1'b0;
+						ALUSrc = 1'b0;
+						RegDest = 1'b0;
+						RegWrite = 1'b0;
+						ALUop = 2'b00;
+					end
+				default:
+					begin
+						MemRead = 1'bX;
+						jump = 1'bX;
+						BneEn = 1'bX;
+						branch = 1'bX;
+						MemtoReg = 1'bX;
+						MemWrite = 1'bX;
+						ALUSrc = 1'bX;
+						RegDest = 1'bX;
+						RegWrite = 1'bX;
+						ALUop = 2'bXX;
+					end
+			endcase
+		end
 	end
 
 	always @(*)
