@@ -71,14 +71,14 @@ module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
 		begin
 			if (~reset)
 				for (i = 0; i < 32; i = i + 1)
-					data[i] = 0;
+					data[i] = i;
 			else if (wen) begin
 				data[wa] = wd;
 			end
 		end
 endmodule
 
-module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, output BneEn, output jump, input [5:0] opcode, input [5:0] func);
+module Ctrl_unit (output RegDest, output branch, output MemRead, output MemtoReg, output [3:0] ALUctr, output MemWrite, output ALUSrc, output RegWrite, output BneEn, input [5:0] opcode, input [5:0] func);
 
 	reg branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegDest, RegWrite, BneEn, jump;
 	reg [3:0] ALUctr;
