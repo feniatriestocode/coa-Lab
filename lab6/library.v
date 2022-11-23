@@ -1,11 +1,12 @@
 `include "constants.h"
 `timescale 1ns/1ps
 
-module ALU #(parameter N = 32) (out, zero, inA, inB, op);
+module ALU #(parameter N = 32) (out, zero, inA, inB, op, shamt);
   output [N-1:0] out;
   output zero;
   input  [N-1:0] inA, inB;
   input  [3:0] op;
+  input	 [4:0] shamt;
 
   assign out = 
 			(op == 4'b0000) ? inA & inB :
@@ -14,8 +15,8 @@ module ALU #(parameter N = 32) (out, zero, inA, inB, op);
 			(op == 4'b0110) ? inA - inB : 
 			(op == 4'b0111) ? ((inA < inB) ? 1:0) : 
 			(op == 4'b1100) ? ~(inA | inB) : 
-      (op == 4'b1111) ? 0:
-      (op == 4'b1000) ? 0: N-1'bx;
+	     	(op == 4'b1111) ? inA << shamt : 
+    	  	(op == 4'b1000) ? inA << inB : N-1'bx;
 
   assign zero = (out == 0);
 endmodule

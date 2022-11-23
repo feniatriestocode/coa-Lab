@@ -15,5 +15,5 @@
 `define SUB			4'b0110
 `define SLT			4'b0111
 `define NOR			4'b1100
-//`define SLL
-//`define SLLV
+`define SLL			4'b1111
+`define SLLV		4'b1000
