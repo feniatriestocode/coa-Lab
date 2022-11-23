@@ -13,7 +13,9 @@ module ALU #(parameter N = 32) (out, zero, inA, inB, op);
 			(op == 4'b0010) ? inA + inB : 
 			(op == 4'b0110) ? inA - inB : 
 			(op == 4'b0111) ? ((inA < inB) ? 1:0) : 
-			(op == 4'b1100) ? ~(inA | inB) : 'bx;
+			(op == 4'b1100) ? ~(inA | inB) : 
+      (op == 4'b1111) ? 0:
+      (op == 4'b1000) ? 0: N-1'bx;
 
   assign zero = (out == 0);
 endmodule
@@ -44,7 +46,6 @@ module Memory (clock, reset, ren, wen, addr, din, dout);
     if (reset == 1'b1 && wen == 1'b1 && ren==1'b0)
         data[addr[9:0]] = din;
    end
-
 endmodule
 
 module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
@@ -69,6 +70,4 @@ module RegFile (clock, reset, raA, raB, wa, wen, wd, rdA, rdB);
     else if( wen == 1'b1 && wa != 5'b0)
         data[wa] <=  wd;
    end
-
 endmodule
-

@@ -1,10 +1,3 @@
-// Define top-level testbench
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// Top level has no inputs or outputs
-// It only needs to instantiate CPU, Drive the inputs to CPU (clock, reset)
-// and monitor the outputs. This is what all testbenches do.
-
-
 `timescale 1ns/1ps
 `define clock_period  10
 
@@ -165,4 +158,3 @@ output reg [39:0]  stringvar;
       default  : stringvar = "---";  
       endcase
 endmodule 
-
