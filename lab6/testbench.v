@@ -1,5 +1,6 @@
 `timescale 1ns/1ps
 `define clock_period  10
+`include "cpu.v"
 
 module cpu_tb;
 integer   f, i;

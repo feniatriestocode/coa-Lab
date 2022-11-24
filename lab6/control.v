@@ -121,37 +121,35 @@ module forwarding_unit (output reg [1:0] forwardA, output reg [1:0] forwardB, ou
 endmodule                    
 
 /**************** Module for Stall Detection in ID pipe stage goes here  *********/
-// TO FILL IN: Module details
-module hazard_unit(output reg PCwrite, output reg IFIDwrite, output NOPen, input IDEX_MemRead, input [4:0] IDEX_RegisterRt, input [4:0] IFID_RegisterRs, input [4:0] IFID_RegisterRt, input [4:0] Rs, input [4:0] Rt);
+module hazard_unit(output PCwrite, output IFID_write, output NOPen, input IDEX_MemRead, input [4:0] IDEX_RegisterRt, input [4:0] IFID_RegisterRs, input [4:0] IFID_RegisterRt, input [4:0] Rs, input [4:0] Rt);
 	assign NOPen = (IDEX_MemRead && (IDEX_RegisterRt == IFID_RegisterRs || IFID_RegisterRt == IDEX_RegisterRt)) ? 0 : 1;
 endmodule
                        
 /************** control for ALU control in EX pipe stage  *************/
 module control_alu(output reg [3:0] ALUOp, input [1:0] ALUcntrl, input [5:0] func);
-
-  always @(ALUcntrl or func)
-    begin
-      case (ALUcntrl)
-        2'b10:
-           begin
-             case (func)
-              6'b100000: ALUOp = 4'b0010; // add
-              6'b100010: ALUOp = 4'b0110; // sub
-              6'b100100: ALUOp = 4'b0000; // and
-              6'b100101: ALUOp = 4'b0001; // or
-              6'b100111: ALUOp = 4'b1100; // nor
-              6'b101010: ALUOp = 4'b0111; // slt
-              6'b000000: ALUOp = 4'b1111;
-              6'b000100: ALUOp = 4'b1000;
-              default: ALUOp = 4'b0000;
-             endcase 
-          end
-        2'b00:
-              ALUOp  = 4'b0010; // add
-        2'b01:
-              ALUOp = 4'b0110; // sub
-        default:
-              ALUOp = 4'b0000;
-     endcase
-    end
+	always @(ALUcntrl or func)
+    	begin
+      		case (ALUcntrl)
+        		2'b10:
+           			begin
+             			case (func)
+              				6'b100000: ALUOp = 4'b0010; // add
+              				6'b100010: ALUOp = 4'b0110; // sub
+              				6'b100100: ALUOp = 4'b0000; // and
+              				6'b100101: ALUOp = 4'b0001; // or
+              				6'b100111: ALUOp = 4'b1100; // nor
+              				6'b101010: ALUOp = 4'b0111; // slt
+              				6'b000000: ALUOp = 4'b1111;
+              				6'b000100: ALUOp = 4'b1000;
+              				default: ALUOp = 4'b0000;
+             			endcase 
+          			end
+        		2'b00:
+              		ALUOp  = 4'b0010; // add
+        		2'b01:
+              		ALUOp = 4'b0110; // sub
+        		default:
+              		ALUOp = 4'b0000;
+     		endcase
+    	end
 endmodule
