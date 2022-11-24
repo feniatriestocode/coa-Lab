@@ -7,7 +7,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
         begin
             case (opcode)
                 `R_FORMAT: 
-                    begin 
+                    begin
                         RegDst 		= 1'b1;
                         MemRead 	= 1'b0;
                         MemWrite 	= 1'b0;
@@ -16,8 +16,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
                         Branch 		= 1'b0;     
                         ALUcntrl 	= 2'b10;
                         BneEn		= 1'b1;
-                        #(`clock_period / 4) RegWrite = 1'b1;
-                        #(`clock_period / 2) RegWrite = 1'b0;
+                        RegWrite = 1'b1;
                     end
                 `LW :   
                     begin 
@@ -29,8 +28,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
                         Branch 		= 1'b0;     
                         ALUcntrl 	= 2'b10;    
                         BneEn		= 1'b0;        
-                        #(`clock_period / 4) RegWrite = 1'b1;
-                        #(`clock_period / 2) RegWrite = 1'b0;
+                        RegWrite = 1'b1;
                     end
                 `SW :   
                     begin 
@@ -42,8 +40,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
                         Branch 		= 1'b0;     
                         ALUcntrl 	= 2'b10;
                         BneEn		= 1'b0;        
-                        #(`clock_period / 4) RegWrite = 1'b1;
-                        #(`clock_period / 2) RegWrite = 1'b0;
+                        RegWrite = 1'b1;
                     end
                 `BEQ:  
                     begin 
@@ -55,6 +52,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
                         Branch 		= 1'b1;
                         ALUcntrl 	= 2'b10;
                         BneEn		= 1'b0;
+                        RegWrite = 1'b0;
                     end
                 `BNE:  
                     begin 
@@ -66,6 +64,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
                         Branch 		= 1'b1;
                         ALUcntrl 	= 2'b10;
                         BneEn		= 1'b1;
+                        RegWrite = 1'b0;
                     end
                 `ADDI :   
                     begin 
@@ -77,8 +76,7 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
                         Branch 		= 1'b0;     
                         ALUcntrl 	= 2'b00;
                         BneEn		= 1'b0;        
-                        #(`clock_period / 4) RegWrite = 1'b1;
-                        #(`clock_period / 2) RegWrite = 1'b0;
+                        RegWrite = 1'b1;
                     end
                 default:
                     begin
@@ -96,33 +94,21 @@ module control_main(output reg RegDst, output reg Branch, output reg MemRead, ou
 endmodule
 
 /**************** Module for Bypass Detection in EX pipe stage goes here  *********/
-module forwarding_unit (output reg [1:0] forwardA, output reg [1:0] forwardB, output reg forwardC,  input [4:0] IDEX_RegisterRs, input [4:0] IDEX_RegisterRt, input [4:0] EXMEM_RegisterRd, input [4:0] MEMWB_RegisterRd , input EXMEM_RegWrite, input MEMWB_RegWrite, input EXMEM_MemWrite);
-    always @(*)
-        begin
-			forwardA = 0;
-			forwardB = 0;
-			forwardC = 0;
+module forwarding_unit (output [1:0] forwardA, output [1:0] forwardB, output forwardC,  input [4:0] IDEX_RegisterRs, input [4:0] IDEX_RegisterRt, input [4:0] EXMEM_RegisterRd, input [4:0] MEMWB_RegisterRd , input EXMEM_RegWrite, input MEMWB_RegWrite, input EXMEM_MemWrite, input reset);
+        assign forwardA = (reset && EXMEM_RegWrite && (EXMEM_RegisterRd != 0) && (IDEX_RegisterRs == EXMEM_RegisterRd)) ? 2 :
+            (reset == 1 && MEMWB_RegWrite && (MEMWB_RegisterRd != 0) && (MEMWB_RegisterRd == IDEX_RegisterRs) && ((IDEX_RegisterRs != EXMEM_RegisterRd) || (EXMEM_RegWrite == 0))) ? 1 : 0;
 
-            if (EXMEM_RegWrite && EXMEM_RegisterRd != 0 && IDEX_RegisterRs == EXMEM_RegisterRd)
-                forwardA = 2;
-            else if (MEMWB_RegWrite && (MEMWB_RegisterRd != 0) && (MEMWB_RegisterRd == IDEX_RegisterRs) && (IDEX_RegisterRs != EXMEM_RegisterRd) || (EXMEM_RegWrite == 0)) begin
-                forwardA = 1;
-            end
+        assign forwardB = (reset && EXMEM_RegWrite && (EXMEM_RegisterRd != 0) && (IDEX_RegisterRt == EXMEM_RegisterRd)) ? 2 :
+            (reset && MEMWB_RegWrite && (MEMWB_RegisterRd != 0) && (MEMWB_RegisterRd == IDEX_RegisterRt) && ((IDEX_RegisterRt != EXMEM_RegisterRd) || (EXMEM_RegWrite == 0))) ? 1 : 0;
 
-            if (EXMEM_RegWrite && EXMEM_RegisterRd != 0 && IDEX_RegisterRt == EXMEM_RegisterRd)
-                forwardB = 2;
-            else if (MEMWB_RegWrite && (MEMWB_RegisterRd != 0) && (MEMWB_RegisterRd == IDEX_RegisterRt) && (IDEX_RegisterRt != EXMEM_RegisterRd) || (EXMEM_RegWrite == 0)) begin
-                forwardB = 1;
-            end
-
-			if (EXMEM_MemWrite && EXMEM_RegisterRd == MEMWB_RegisterRd)
-				forwardC = 1;
-        end
+        assign forwardC = (EXMEM_MemWrite && (EXMEM_RegisterRd == MEMWB_RegisterRd)) ? 1 : 0;
 endmodule                    
 
 /**************** Module for Stall Detection in ID pipe stage goes here  *********/
 module hazard_unit(output PCwrite, output IFID_write, output NOPen, input IDEX_MemRead, input [4:0] IDEX_RegisterRt, input [4:0] IFID_RegisterRs, input [4:0] IFID_RegisterRt, input [4:0] Rs, input [4:0] Rt);
 	assign NOPen = (IDEX_MemRead && (IDEX_RegisterRt == IFID_RegisterRs || IFID_RegisterRt == IDEX_RegisterRt)) ? 0 : 1;
+    assign PCwrite = NOPen;
+    assign IFID_write = NOPen;
 endmodule
                        
 /************** control for ALU control in EX pipe stage  *************/

@@ -34,7 +34,7 @@ always
  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  // Initialize the Instruction Memory with the MIPS executable
 initial begin 
-  $readmemh("program.hex", cpu0.cpu_IMem.data);
+  $readmemh("C:/program.hex", cpu0.cpu_IMem.data);
 end
 
 

@@ -3,7 +3,7 @@
 `timescale 1ns/1ps
 
 module cpu(input clock, input reset);
-	reg [31:0] PC; 
+reg [31:0] PC; 
 	reg [31:0] IFID_PCplus4;
 	reg [31:0] IFID_instr;
 
@@ -47,8 +47,8 @@ module cpu(input clock, input reset);
 			end
 		end
   
-  // IFID pipeline register
-  always @(posedge clock or negedge reset)
+	// IFID pipeline register
+  	always @(posedge clock or negedge reset)
   	begin 
     	if (reset == 1'b0)     
       		begin
@@ -62,7 +62,7 @@ module cpu(input clock, input reset);
     		end
   	end
   
-	Memory cpu_IMem(1'b1, 1'b1, 1'b1, 1'b0, PC, 32'b0, instr);
+	Memory cpu_IMem(1'b1, 1'b1, 1'b1, 1'b0, PC >> 2, 32'b0, instr);
 
 	/***************** Instruction Decode Unit (ID)  ****************/
 	assign opcode = IFID_instr[31:26];
@@ -105,9 +105,8 @@ module cpu(input clock, input reset);
         			IDEX_instr_rd <= instr_rd;
         			IDEX_instr_rs <= instr_rs;
         			IDEX_instr_rt <= instr_rt;
-        			IDEX_RegDst <= RegDst;
       			end
-			if (NOPEn) begin
+			if (~NOPEn) begin
         		IDEX_ALUcntrl = 0;
         		IDEX_ALUSrc = 0;
     	    	IDEX_Branch = 0;
@@ -117,7 +116,7 @@ module cpu(input clock, input reset);
         		IDEX_RegWrite = 0;
         		IDEX_BneEn = 0;
   			end
-
+			IDEX_RegDst <= RegDst;
         	IDEX_ALUcntrl <= ALUcntrl;
         	IDEX_ALUSrc <= ALUSrc;
         	IDEX_Branch <= Branch;
@@ -176,7 +175,7 @@ module cpu(input clock, input reset);
 	// ALU control
 	control_alu control_alu(ALUOp, IDEX_ALUcntrl, IDEX_signExtend[5:0]);
   
-	forwarding_unit for_unit (forwardA, forwardB, forwardC, IDEX_instr_rs, IDEX_instr_rt, IDEX_instr_rd, MEMWB_RegWriteAddr, EXMEM_RegWrite, MEMWB_RegWrite, EXMEM_MemWrite);
+	forwarding_unit for_unit (forwardA, forwardB, forwardC, IDEX_instr_rs, IDEX_instr_rt, IDEX_instr_rd, MEMWB_RegWriteAddr, EXMEM_RegWrite, MEMWB_RegWrite, EXMEM_MemWrite, reset);
 
 	/***************** Memory Unit (MEM)  ****************/  
 	Memory cpu_DMem (clock, reset, EXMEM_MemRead, EXMEM_MemWrite, EXMEM_ALUOut, datatowrite, DMemOut);
@@ -204,4 +203,5 @@ module cpu(input clock, input reset);
 
 	/***************** WriteBack Unit (WB)  ****************/  
 	assign datatowrite = forwardC ? MEMWB_DMemOut : EXMEM_MemWriteData;
+	assign wRegData = MEMWB_RegWrite ? MEMWB_DMemOut : MEMWB_ALUOut;
 endmodule
