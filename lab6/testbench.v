@@ -1,18 +1,16 @@
-`timescale 1ns/1ps
 `define clock_period  10
 `include "cpu.v"
+`timescale 1ns/1ps
 
 module cpu_tb;
 integer   f, i;
 reg       clock, reset;    // Clock and reset signals
 wire  [8*26:1] stringvar;
 
-
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Instantiate CPU
 cpu cpu0(clock, reset);
-string_manipulation pipe0(clock, cpu0.PC, cpu0.instr,cpu0.IFID_instr, stringvar);
-
+string_manipulation pipe0(clock, cpu0.PC, cpu0.instr, cpu0.IFID_instr, stringvar);
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Initialization and signal generation
@@ -24,19 +22,16 @@ initial
    #(40*`clock_period) $finish;     // Need to adjust to the number of executed instructions
   end
 
-
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Clock is here
 always 
    #(`clock_period / 2) clock = ~clock;  // Clock generation 
 
-
  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  // Initialize the Instruction Memory with the MIPS executable
 initial begin 
-  $readmemh("C:/program.hex", cpu0.cpu_IMem.data);
+  $readmemh("C:/iverilog/program.hex", cpu0.cpu_IMem.data);
 end
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Gtkwave stuff to dump the signals to the VCD file
@@ -48,7 +43,7 @@ initial begin
          $dumpvars(1, cpu_tb.cpu0.cpu_regs.data[i]);
          $dumpvars(1, cpu_tb.cpu0.cpu_IMem.data[i]);
          $dumpvars(1, cpu_tb.cpu0.cpu_DMem.data[i]);
-  end
+ end
 
 end  
 
@@ -87,7 +82,7 @@ always@(negedge clock)
        80: $fwrite(f,"addi $s6, $s6, -100: %s\n", (cpu0.cpu_regs.data[22]==32'h00037f9c)  ?"PASS" : "FAIL");
        88:   $fclose(f);  
 endcase
- // add $t0, $t0, $s0    # $t0 = $8 = 24 (D) 
+ // add $t0, $t0, $s0    # $t0 = $8 = 24 (D)
  // sw $ra, 4($t2)       # Mem[$t2+4] = 31
  // lw $t5, 4($t2)       # $t5 = $13 = 31
  // sub $t1, $t1, $a0    # $t1 = $9 = 5
@@ -104,11 +99,8 @@ endcase
  // sll $s4, $v0, 12     # $s4 = $20 = 0x0001c000, RAW stall
  // sllv $s6, $s4, $sp   # $s6 = $22 = 0x00038000, bypass from ALU
  // addi $s6, $s6, -100  # $s6 = $22 = 0x00037f9c
-
-
 end
 endmodule
-
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 module string_manipulation( clock, PC, instr0, instr1, stringvar);
@@ -120,16 +112,15 @@ reg [31:0] instr2, instr3, instr4, PC_prv;
 
 always @(posedge clock) {PC_prv,instr2,instr3,instr4} <= {PC,instr1,instr2,instr3};
 
-instr2str instr2str_0(instr0, stringvar0); 
-instr2str instr2str_1(instr1, stringvar1); 
-instr2str instr2str_2(instr2, stringvar2); 
-instr2str instr2str_3(instr3, stringvar3); 
-instr2str instr2str_4(instr4, stringvar4); 
-assign stringvar = {stringvar0,stringvar1,PC_prv == PC ? "----":stringvar2,stringvar3,stringvar4};
+instr2str instr2str_0(instr0, stringvar0);
+instr2str instr2str_1(instr1, stringvar1);
+instr2str instr2str_2(instr2, stringvar2);
+instr2str instr2str_3(instr3, stringvar3);
+instr2str instr2str_4(instr4, stringvar4);
+assign stringvar = {stringvar0,stringvar1,PC_prv == PC ? "----" : stringvar2,stringvar3,stringvar4};
 endmodule
 
-
-module instr2str(instr, stringvar); 
+module instr2str(instr, stringvar);
 input  [31:0]   instr;
 output reg [39:0]  stringvar;
 
@@ -137,25 +128,25 @@ output reg [39:0]  stringvar;
     if (instr == 32'b0) stringvar = "---";
     else
     case(instr[31:26])
-        6'b000000: 
+        6'b000000:
             case (instr[5:0] )
                 6'b000000 : stringvar = "SLL";
                 6'b000010 : stringvar = "SRL";
                 6'b000100 : stringvar = "SLLV";
                 6'b000110 : stringvar = "SRLV";
-                6'b100000 : stringvar = "ADD";         
+                6'b100000 : stringvar = "ADD";
                 6'b100010 : stringvar = "SUB";
                 6'b100100 : stringvar = "AND";
                 6'b100101 : stringvar = "OR";
                 6'b100111 : stringvar = "NOR";
-                6'b101010 : stringvar = "SLT"; 
-                default   : stringvar = "---";  
+                6'b101010 : stringvar = "SLT";
+                default   : stringvar = "---";
             endcase
-      6'b100011: stringvar = "LW";  
-      6'b101011: stringvar = "SW";  
-      6'b000100: stringvar = "BEQ";  
-      6'b000101: stringvar = "BNE";  
-      6'b001000: stringvar = "ADDI"; 
-      default  : stringvar = "---";  
+      6'b100011: stringvar = "LW";
+      6'b101011: stringvar = "SW";
+      6'b000100: stringvar = "BEQ";
+      6'b000101: stringvar = "BNE";
+      6'b001000: stringvar = "ADDI";
+      default  : stringvar = "---";
       endcase
-endmodule 
+endmodule
