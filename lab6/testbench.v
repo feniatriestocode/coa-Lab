@@ -63,23 +63,23 @@ always@(negedge clock)
    else if ((PC_prv == 60)&&(cpu0.PC==60)) $fwrite(f,"STALL @SLL\n");
    else
     #1 case (cpu0.PC)
-       16: $fwrite(f,"add $t0, $t0, $s0  : %s\n", (cpu0.cpu_regs.data[8]==24) ?"PASS" : "FAIL");
-       20: $fwrite(f,"sw $ra, 4($t2)     : %s\n", (cpu0.cpu_DMem.data[14]==31)?"PASS" : "FAIL");
-       24: $fwrite(f,"lw $t5, 4($t2)     : %s\n", (cpu0.cpu_regs.data[13]==31)?"PASS" : "FAIL");
-       28: $fwrite(f,"sub $t1, $t1, $a0  : %s\n", (cpu0.cpu_regs.data[9]==5)  ?"PASS" : "FAIL");
-       32: $fwrite(f,"or $t6, $t7, $t5   : %s\n", (cpu0.cpu_regs.data[14]==31)  ?"PASS" : "FAIL");
-       36: $fwrite(f,"and $s3, $s0, $s2  : %s\n", (cpu0.cpu_regs.data[19]==16)  ?"PASS" : "FAIL");
-       40: $fwrite(f,"lw $t6, 4($t2)     : %s\n", (cpu0.cpu_regs.data[14]==31)  ?"PASS" : "FAIL");
-       44: $fwrite(f,"sw $gp, 8($t2)     : %s\n", (cpu0.cpu_DMem.data[18]==28)  ?"PASS" : "FAIL");
-       48: $fwrite(f,"lw $v0, 8($t2)     : %s\n", (cpu0.cpu_regs.data[2]==28)  ?"PASS" : "FAIL");
-       52: $fwrite(f,"and $a0, $v0, $t5  : %s\n", (cpu0.cpu_regs.data[4]==28)  ?"PASS" : "FAIL");
-       56: $fwrite(f,"or $a0, $a0, $t0   : %s\n", (cpu0.cpu_regs.data[4]==28)  ?"PASS" : "FAIL");
-       60: $fwrite(f,"add $t1, $a0, $v0  : %s\n", (cpu0.cpu_regs.data[9]==56)  ?"PASS" : "FAIL");
-       64: $fwrite(f,"slt $sp, $a0, $t1  : %s\n", (cpu0.cpu_regs.data[29]==1)  ?"PASS" : "FAIL");
-       68: $fwrite(f,"lw $v0, 8($t2)     : %s\n", (cpu0.cpu_regs.data[2]==28)  ?"PASS" : "FAIL");
-       72: $fwrite(f,"sll $s4, $v0, 12   : %s\n", (cpu0.cpu_regs.data[20]==32'h0001c000)  ?"PASS" : "FAIL");
-       76: $fwrite(f,"sllv $s6, $s4, $sp : %s\n", (cpu0.cpu_regs.data[22]==32'h00038000)  ?"PASS" : "FAIL");
-       80: $fwrite(f,"addi $s6, $s6, -100: %s\n", (cpu0.cpu_regs.data[22]==32'h00037f9c)  ?"PASS" : "FAIL");
+       16: $fwrite(f,"add $t0, $t0, $s0  : %s\n", (cpu0.cpu_regs.data[8]==24)  ? "PASS" : "FAIL");
+       20: $fwrite(f,"sw $ra, 4($t2)     : %s\n", (cpu0.cpu_DMem.data[14]==31) ? "PASS" : "FAIL");
+       24: $fwrite(f,"lw $t5, 4($t2)     : %s\n", (cpu0.cpu_regs.data[13]==31) ? "PASS" : "FAIL");
+       28: $fwrite(f,"sub $t1, $t1, $a0  : %s\n", (cpu0.cpu_regs.data[9]==5)   ? "PASS" : "FAIL");
+       32: $fwrite(f,"or $t6, $t7, $t5   : %s\n", (cpu0.cpu_regs.data[14]==31) ? "PASS" : "FAIL");
+       36: $fwrite(f,"and $s3, $s0, $s2  : %s\n", (cpu0.cpu_regs.data[19]==16) ? "PASS" : "FAIL");
+       40: $fwrite(f,"lw $t6, 4($t2)     : %s\n", (cpu0.cpu_regs.data[14]==31) ? "PASS" : "FAIL");
+       44: $fwrite(f,"sw $gp, 8($t2)     : %s\n", (cpu0.cpu_DMem.data[18]==28) ? "PASS" : "FAIL");
+       48: $fwrite(f,"lw $v0, 8($t2)     : %s\n", (cpu0.cpu_regs.data[2]==28)  ? "PASS" : "FAIL");
+       52: $fwrite(f,"and $a0, $v0, $t5  : %s\n", (cpu0.cpu_regs.data[4]==28)  ? "PASS" : "FAIL");
+       56: $fwrite(f,"or $a0, $a0, $t0   : %s\n", (cpu0.cpu_regs.data[4]==28)  ? "PASS" : "FAIL");
+       60: $fwrite(f,"add $t1, $a0, $v0  : %s\n", (cpu0.cpu_regs.data[9]==56)  ? "PASS" : "FAIL");
+       64: $fwrite(f,"slt $sp, $a0, $t1  : %s\n", (cpu0.cpu_regs.data[29]==1)  ? "PASS" : "FAIL");
+       68: $fwrite(f,"lw $v0, 8($t2)     : %s\n", (cpu0.cpu_regs.data[2]==28)  ? "PASS" : "FAIL");
+       72: $fwrite(f,"sll $s4, $v0, 12   : %s\n", (cpu0.cpu_regs.data[20]==32'h0001c000)  ? "PASS" : "FAIL");
+       76: $fwrite(f,"sllv $s6, $s4, $sp : %s\n", (cpu0.cpu_regs.data[22]==32'h00038000)  ? "PASS" : "FAIL");
+       80: $fwrite(f,"addi $s6, $s6, -100: %s\n", (cpu0.cpu_regs.data[22]==32'h00037f9c)  ? "PASS" : "FAIL");
        88:   $fclose(f);  
 endcase
  // add $t0, $t0, $s0    # $t0 = $8 = 24 (D)
