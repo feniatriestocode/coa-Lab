@@ -1,0 +1,81 @@
+[*]
+[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
+[*] Fri Nov 25 15:34:37 2022
+[*]
+[dumpfile] "C:\Users\вягстос\Desktop\tb_dumpfile.vcd"
+[savefile] "C:\Users\вягстос\Desktop\template.gtkw"
+[timestart] 0
+[size] 1920 1017
+[pos] -61 -61
+*-14.761647 85000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] cpu_tb.
+[sst_width] 291
+[signals_width] 296
+[sst_expanded] 1
+[sst_vpaned_height] 300
+@28
+cpu_tb.clock
+cpu_tb.reset
+@22
+cpu_tb.cpu0.PC[31:0]
+cpu_tb.cpu0.instr[31:0]
+@200
+-IFID
+@22
+cpu_tb.cpu0.IFID_instr[31:0]
+cpu_tb.cpu0.IFID_PCplus4[31:0]
+@200
+-IDEX
+@22
+cpu_tb.cpu0.IDEX_instr_rs[4:0]
+cpu_tb.cpu0.IDEX_instr_rt[4:0]
+cpu_tb.cpu0.IDEX_instr_rd[4:0]
+cpu_tb.cpu0.IDEX_rdA[31:0]
+cpu_tb.cpu0.IDEX_rdB[31:0]
+cpu_tb.cpu0.IDEX_signExtend[31:0]
+@28
+cpu_tb.cpu0.IDEX_RegWrite
+cpu_tb.cpu0.IDEX_RegDst
+cpu_tb.cpu0.IDEX_MemWrite
+cpu_tb.cpu0.IDEX_MemToReg
+cpu_tb.cpu0.IDEX_MemRead
+cpu_tb.cpu0.IDEX_Branch
+cpu_tb.cpu0.IDEX_BneEn
+cpu_tb.cpu0.IDEX_ALUcntrl[1:0]
+cpu_tb.cpu0.IDEX_ALUSrc
+cpu_tb.cpu0.forwardA[1:0]
+cpu_tb.cpu0.forwardB[1:0]
+@29
+cpu_tb.cpu0.forwardC
+@200
+-EXMEM
+@22
+cpu_tb.cpu0.EXMEM_ALUOut[31:0]
+@28
+cpu_tb.cpu0.EXMEM_Zero
+@22
+cpu_tb.cpu0.EXMEM_RegWriteAddr[4:0]
+@28
+cpu_tb.cpu0.EXMEM_RegWrite
+@22
+cpu_tb.cpu0.EXMEM_MemWriteData[31:0]
+@28
+cpu_tb.cpu0.EXMEM_MemWrite
+cpu_tb.cpu0.EXMEM_MemToReg
+cpu_tb.cpu0.EXMEM_MemRead
+@200
+-MEMWB
+@22
+cpu_tb.cpu0.MEMWB_ALUOut[31:0]
+cpu_tb.cpu0.MEMWB_DMemOut[31:0]
+cpu_tb.cpu0.MEMWB_RegWriteAddr[4:0]
+@28
+cpu_tb.cpu0.MEMWB_RegWrite
+cpu_tb.cpu0.MEMWB_MemToReg
+@200
+-MB
+@22
+cpu_tb.cpu0.wRegData[31:0]
+cpu_tb.cpu0.datatowrite[31:0]
+[pattern_trace] 1
+[pattern_trace] 0
