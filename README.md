@@ -4,3 +4,4 @@
 ## Lab 3 - Recursive functions
 ## Lab 4 - ALU and Registers from MIPS Arch
 ## Lab 5 - Control unit, PC, Memory...
+## Lab 6 - Pipeline, forward & hazard unit
