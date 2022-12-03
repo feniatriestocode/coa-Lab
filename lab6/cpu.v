@@ -7,7 +7,7 @@ module cpu(input clock, input reset);
 	reg [31:0] IFID_PCplus4;
 	reg [31:0] IFID_instr;
 
-	reg [31:0] IDEX_rdA, IDEX_rdB, IDEX_signExtend, IDEX_PCplus4;
+	reg [31:0] IDEX_rdA, IDEX_rdB, IDEX_signExtend;
 	reg [4:0]  IDEX_instr_rt, IDEX_instr_rs, IDEX_instr_rd, IDEX_Shamt;
 	reg        IDEX_RegDst, IDEX_ALUSrc;
 	reg [1:0]  IDEX_ALUcntrl;
@@ -15,7 +15,7 @@ module cpu(input clock, input reset);
 	reg        IDEX_MemToReg, IDEX_RegWrite;
 
 	reg [4:0]  EXMEM_RegWriteAddr, EXMEM_instr_rd;
-	reg [31:0] EXMEM_ALUOut, EXMEM_jumpaddr;
+	reg [31:0] EXMEM_ALUOut;
 	reg        EXMEM_Zero;
 	reg [31:0] EXMEM_MemWriteData;
 	reg        EXMEM_Branch, EXMEM_MemRead, EXMEM_MemWrite, EXMEM_RegWrite, EXMEM_MemToReg, EXMEM_BneEn;
@@ -25,8 +25,8 @@ module cpu(input clock, input reset);
 	reg [31:0] MEMWB_ALUOut;
 	reg        MEMWB_MemToReg, MEMWB_RegWrite;
 
-	wire [31:0] instr, ALUInA, ALUInB, ALUOut, rdA, rdB, signExtend, DMemOut, wRegData, PCIncr, datatowrite;
-	wire Zero, RegDst, MemRead, MemWrite, MemToReg, ALUSrc, Branch, BneEn, forwardC, RegWrite, PCEn, IFID_En, NOPEn, PCSrc;
+	wire [31:0] instr, ALUInA, ALUInB, ALUOut, rdA, rdB, signExtend, DMemOut, wRegData, PCIncr, datatowrite, rdBetween; 
+	wire Zero, RegDst, MemRead, MemWrite, MemToReg, ALUSrc, Branch, BneEn, forwardC, BrOUT, RegWrite, PCEn, IFID_En, NOPEn;
 	wire [5:0] opcode, func;
 	wire [4:0] instr_rs, instr_rt, instr_rd, RegWriteAddr, shamt;
 	wire [3:0] ALUOp;
@@ -38,8 +38,8 @@ module cpu(input clock, input reset);
 		begin 
 			if (~reset)
 				PC = -4;
-			else if (PCEn && PCSrc) begin
-				PC = EXMEM_jumpaddr; // branch address
+			else if (BrOUT) begin
+				PC = 0; // branch address
 			end else if (PCEn) begin
 				PC <= PC + 4;
 			end
@@ -51,7 +51,7 @@ module cpu(input clock, input reset);
 			if (~reset)
 				begin
 					IFID_PCplus4 <= 32'b0;
-					IFID_instr <= 32'h0;
+					IFID_instr <= 32'hFF8F8F8F;
 				end
 			else if (IFID_En)
 				begin
@@ -96,7 +96,6 @@ module cpu(input clock, input reset);
 					IDEX_RegWrite <= 1'b0;
 					IDEX_BneEn <= 1'b0;
 					IDEX_Shamt <= 1'b0;
-					IDEX_PCplus4 <= 32'h0;
 				end
 			else
 				begin
@@ -129,7 +128,6 @@ module cpu(input clock, input reset);
 							IDEX_BneEn <= BneEn;
 							IDEX_RegWrite <= RegWrite;
 							IDEX_Shamt <= shamt;
-							IDEX_PCplus4 <= IFID_PCplus4;
 						end
 				end
 		end
@@ -139,17 +137,17 @@ module cpu(input clock, input reset);
 
 	hazard_unit hz_unit (PCEn, IFID_En, NOPEn, IDEX_MemRead, IDEX_instr_rt, instr_rs, instr_rt, instr_rs, instr_rt);
 
+	assign rdBetween = (forwardB == 2'b00) ? IDEX_rdB : (forwardB == 2'b01) ? wRegData : EXMEM_ALUOut;
+
 	/***************** Execution Unit (EX) ****************/
 	assign ALUInA = (forwardA == 2'b00) ? IDEX_rdA : (forwardA == 2'b01) ? wRegData : EXMEM_ALUOut;
-	assign ALUInB = (IDEX_ALUSrc == 1'b1) ? IDEX_signExtend : (forwardB == 2'b00) ? IDEX_rdB : (forwardB == 2'b01) ? wRegData : EXMEM_ALUOut;
-
-	assign jumpaddr = (IDEX_signExtend << 2) + IDEX_PCplus4;
+	assign ALUInB = (IDEX_ALUSrc == 1'b1) ? IDEX_signExtend : rdBetween;
 
 	//  ALU
 	ALU cpu_alu(ALUOut, Zero, ALUInA, ALUInB, ALUOp, IDEX_Shamt);
 
 	assign RegWriteAddr = (IDEX_RegDst==1'b0) ? IDEX_instr_rt : IDEX_instr_rd;
-	assign PCSrc = EXMEM_Branch && (EXMEM_BneEn ? ~EXMEM_Zero : EXMEM_Zero);
+	assign BrOUT = Branch && (BneEn ? ~Zero : Zero);
 
 	// EXMEM pipeline register
 	always @(posedge clock or negedge reset)
@@ -165,8 +163,6 @@ module cpu(input clock, input reset);
 					EXMEM_RegWrite <= 1'b0;
 					EXMEM_RegWriteAddr <= 5'b0;
 					EXMEM_MemWriteData <= 32'b0;
-					EXMEM_jumpaddr <=32'h0;
-					EXMEM_BneEn <= 1'b0;
 				end
 			else
 				begin
@@ -174,13 +170,11 @@ module cpu(input clock, input reset);
 					EXMEM_ALUOut <= ALUOut;
 					EXMEM_Branch <= IDEX_Branch;
 					EXMEM_MemRead <= IDEX_MemRead;
-					EXMEM_MemWriteData <= IDEX_rdB;
+					EXMEM_MemWriteData <= rdBetween; 
 					EXMEM_MemWrite <= IDEX_MemWrite;
 					EXMEM_MemToReg <= IDEX_MemToReg;
 					EXMEM_RegWrite <= IDEX_RegWrite;
 					EXMEM_RegWriteAddr <= RegWriteAddr;
-					EXMEM_jumpaddr <= jumpaddr;
-					EXMEM_BneEn <= IDEX_BneEn;
 				end
 		end
 

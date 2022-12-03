@@ -30,7 +30,7 @@ always
  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  // Initialize the Instruction Memory with the MIPS executable
 initial begin 
-  $readmemh("C:/iverilog/program.hex", cpu0.cpu_IMem.data);
+  $readmemh("/home/chris/dev/organosi/coa-Lab/lab6/program.hex", cpu0.cpu_IMem.data);
 end
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
