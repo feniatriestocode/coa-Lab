@@ -9,7 +9,7 @@ module cpu(input clock, input reset);
 
 	reg [31:0] IDEX_rdA, IDEX_rdB, IDEX_signExtend, IDEX_jumpaddr;
 	reg [4:0]  IDEX_instr_rt, IDEX_instr_rs, IDEX_instr_rd, IDEX_Shamt;
-	reg        IDEX_RegDst, IDEX_ALUSrc;
+	reg        IDEX_RegDst, IDEX_ALUSrc, IDEX_JumpFlush;
 	reg [1:0]  IDEX_ALUcntrl;
 	reg        IDEX_Branch, IDEX_MemRead, IDEX_MemWrite, IDEX_BneEn, IDEX_jump;
 	reg        IDEX_MemToReg, IDEX_RegWrite;
@@ -17,8 +17,8 @@ module cpu(input clock, input reset);
 	reg [4:0]  EXMEM_RegWriteAddr, EXMEM_instr_rd;
 	reg [31:0] EXMEM_ALUOut;
 	reg        EXMEM_Zero, EXMEM_PCSrc;
-	reg [31:0] EXMEM_MemWriteData, EXMEM_branchaddr;
-	reg        EXMEM_Branch, EXMEM_MemRead, EXMEM_MemWrite, EXMEM_RegWrite, EXMEM_MemToReg, EXMEM_BneEn;
+	reg [31:0] EXMEM_MemWriteData, EXMEM_branchaddr, EXMEM_jumpaddr;
+	reg        EXMEM_Branch, EXMEM_jump, EXMEM_MemRead, EXMEM_MemWrite, EXMEM_RegWrite, EXMEM_MemToReg, EXMEM_BneEn, EXMEM_JumpFlush;
 
 	reg [31:0] MEMWB_DMemOut;
 	reg [4:0]  MEMWB_RegWriteAddr, MEMWB_instr_rd;
@@ -26,7 +26,7 @@ module cpu(input clock, input reset);
 	reg        MEMWB_MemToReg, MEMWB_RegWrite;
 
 	wire [31:0] instr, ALUInA, ALUInB, ALUOut, rdA, rdB, signExtend, DMemOut, wRegData, datatowrite, rdBetween; 
-	wire Zero, RegDst, MemRead, MemWrite, MemToReg, ALUSrc, Branch, jump, BneEn, forwardC, PCSrc, RegWrite, PCEn, BranchStall, IFID_En, bubble_idex;
+	wire Zero, RegDst, MemRead, MemWrite, MemToReg, ALUSrc, Branch, jump, BneEn, forwardC, PCSrc, RegWrite, PCEn, JumpFlush, IFID_En, bubble_idex;
 	wire [5:0] opcode, func;
 	wire [4:0] instr_rs, instr_rt, instr_rd, RegWriteAddr, shamt;
 	wire [3:0] ALUOp;
@@ -40,9 +40,9 @@ module cpu(input clock, input reset);
 			if (~reset)
 				PC = -4;
 			else if (PCEn && PCSrc) begin
-				PC = EXMEM_branchaddr; // branch address
-			end else if (PCEn && jump) begin
-				PC = IDEX_jumpaddr;
+				PC = EXMEM_branchaddr;              // branch address
+			end else if (PCEn && jump) begin        //Jump address 
+				PC = jumpaddr;
 			end else if (PCEn) begin
 				PC <= PC + 4;
 			end
@@ -82,7 +82,7 @@ module cpu(input clock, input reset);
 	// IDEX pipeline register
 	always @(posedge clock or negedge reset)
 		begin
-			if (~reset)
+			if (~reset || EXMEM_JumpFlush || EXMEM_PCSrc)
 				begin
 					IDEX_rdA <= 32'b0;
 					IDEX_rdB <= 32'b0;
@@ -102,10 +102,11 @@ module cpu(input clock, input reset);
 					IDEX_BneEn <= 1'b0;
 					IDEX_Shamt <= 1'b0;
 					IDEX_jump <= 1'b0;
+					IDEX_JumpFlush <= 1'b0;
 				end
 			else
 				begin
-					if (~bubble_idex || ((~BranchStall) && (PCSrc || jump)) )
+					if (~bubble_idex)
 						begin
 							IDEX_ALUcntrl <= 0;
 							IDEX_ALUSrc <= 0;
@@ -116,6 +117,7 @@ module cpu(input clock, input reset);
 							IDEX_RegWrite <= 0;
 							IDEX_BneEn <= 0;
 							IDEX_jump <= 0;
+							IDEX_JumpFlush <= 0;
 						end
 					else
 						begin
@@ -137,6 +139,7 @@ module cpu(input clock, input reset);
 							IDEX_RegWrite <= RegWrite;
 							IDEX_Shamt <= shamt;
 							IDEX_jump <= jump;
+							IDEX_JumpFlush <= JumpFlush;
 						end
 				end
 		end
@@ -144,7 +147,7 @@ module cpu(input clock, input reset);
 	// Main Control Unit 
 	control_main control_main (RegDst, Branch, jump, MemRead, MemWrite, MemToReg, ALUSrc, RegWrite, BneEn, ALUcntrl, opcode);
 
-	hazard_unit hz_unit (PCEn, IFID_En, BranchStall, bubble_idex, IDEX_MemRead, IDEX_instr_rt, instr_rs, instr_rt, opcode);
+	hazard_unit hz_unit (PCEn, IFID_En, JumpFlush, bubble_idex, IDEX_MemRead, IDEX_instr_rt, instr_rs, instr_rt, opcode);
 
 	assign rdBetween = (forwardB == 2'b00) ? IDEX_rdB : (forwardB == 2'b01) ? wRegData : EXMEM_ALUOut;
 
@@ -157,15 +160,17 @@ module cpu(input clock, input reset);
 
 	assign RegWriteAddr = (IDEX_RegDst==1'b0) ? IDEX_instr_rt : IDEX_instr_rd;
 	assign branchaddr = (signExtend << 2) + 4;
-	assign PCSrc = Branch && (BneEn ? ~Zero : Zero);
+	assign PCSrc = Branch && (BneEn ? ~Zero : Zero); //1 if PC changes
 
+	
 	// EXMEM pipeline register
 	always @(posedge clock or negedge reset)
 		begin
-			if (~reset)
+			if (~reset || EXMEM_JumpFlush || EXMEM_PCSrc)
 				begin
 					EXMEM_Zero <= 1'b0;
 					EXMEM_Branch <= 1'b0;
+					EXMEM_jump <= 1'b0;
 					EXMEM_ALUOut <= 32'b0;
 					EXMEM_MemRead <= 1'b0;
 					EXMEM_MemWrite <= 1'b0;
@@ -174,6 +179,7 @@ module cpu(input clock, input reset);
 					EXMEM_RegWriteAddr <= 5'b0;
 					EXMEM_MemWriteData <= 32'b0;
 					EXMEM_branchaddr <= 32'b0;
+					EXMEM_JumpFlush <= 1'b0;
 					EXMEM_PCSrc <= 1'b0;
 				end
 			else
@@ -188,6 +194,8 @@ module cpu(input clock, input reset);
 					EXMEM_MemToReg <= IDEX_MemToReg;
 					EXMEM_RegWrite <= IDEX_RegWrite;
 					EXMEM_RegWriteAddr <= RegWriteAddr;
+					EXMEM_JumpFlush <= IDEX_JumpFlush;
+					EXMEM_jumpaddr <= IDEX_jumpaddr;
 					EXMEM_PCSrc <= PCSrc;
 				end
 		end
