@@ -82,7 +82,7 @@ module cpu(input clock, input reset);
 	// IDEX pipeline register
 	always @(posedge clock or negedge reset)
 		begin
-			if (~reset || EXMEM_JumpFlush || EXMEM_PCSrc)
+			if (~reset || EXMEM_PCSrc)
 				begin
 					IDEX_rdA <= 32'b0;
 					IDEX_rdB <= 32'b0;
@@ -166,7 +166,7 @@ module cpu(input clock, input reset);
 	// EXMEM pipeline register
 	always @(posedge clock or negedge reset)
 		begin
-			if (~reset || EXMEM_JumpFlush || EXMEM_PCSrc)
+			if (~reset || EXMEM_PCSrc)
 				begin
 					EXMEM_Zero <= 1'b0;
 					EXMEM_Branch <= 1'b0;
@@ -179,7 +179,6 @@ module cpu(input clock, input reset);
 					EXMEM_RegWriteAddr <= 5'b0;
 					EXMEM_MemWriteData <= 32'b0;
 					EXMEM_branchaddr <= 32'b0;
-					EXMEM_JumpFlush <= 1'b0;
 					EXMEM_PCSrc <= 1'b0;
 				end
 			else
@@ -194,8 +193,6 @@ module cpu(input clock, input reset);
 					EXMEM_MemToReg <= IDEX_MemToReg;
 					EXMEM_RegWrite <= IDEX_RegWrite;
 					EXMEM_RegWriteAddr <= RegWriteAddr;
-					EXMEM_JumpFlush <= IDEX_JumpFlush;
-					EXMEM_jumpaddr <= IDEX_jumpaddr;
 					EXMEM_PCSrc <= PCSrc;
 				end
 		end
