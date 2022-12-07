@@ -125,12 +125,12 @@ module forwarding_unit (output [1:0] forwardA, output [1:0] forwardB, output for
 endmodule
 
 /**************** Module for Stall Detection in ID pipe stage goes here *********/
-module hazard_unit(output PCwrite, output IFID_write, output BranchStall, output NOPen, input IDEX_MemRead, 
+module hazard_unit(output PCwrite, output IFID_write, output JumpFlush, output NOPen, input IDEX_MemRead, 
 					input [4:0] IDEX_RegisterRt, input [4:0] IFID_RegisterRs, 
 					input [4:0] IFID_RegisterRt, input [5:0] opcode);
 					
 	assign NOPen = (IDEX_MemRead && ((IDEX_RegisterRt == IFID_RegisterRs) || (IFID_RegisterRt == IDEX_RegisterRt))) ? 0 : 1;
-	assign BranchStall = ( (opcode == `BEQ) || (opcode == `BNE) || (opcode == `J) ) ? 0 : 1;
+	assign JumpFlush = opcode == `J ? 1 : 0;
 	assign PCwrite = NOPen;
 	assign IFID_write = NOPen;
 endmodule
